@@ -3,6 +3,69 @@ import re
 from datetime import datetime
 from math import exp
 
+
+def enum(**enums):
+	return type('Enum', (), enums)
+
+
+class PSpec(object):
+	"""
+	Class PSpec - stores information to help Period class to handle calculations
+	"""
+	dates = None
+	fixed_numberof = None
+	unit = None
+
+
+def period(pspec):
+	"""
+	period function parses the period specification and return a PSpec object
+		p = period('15 days')
+		p = period('1 month')
+		p = period('2.5 months')
+		p = period('22.55 months')
+		p = period('1.5 years')
+		p = period('1.5 quarters')	
+		p = period('2012-07-12:2012-07-16')	
+		p = period( ("2012-7-12", "2012-7-22") )	
+		p = period('2012-12-12:2012-10-16')
+		p = period('2012-07-12:2012-07-22')
+	"""
+	
+	if type(pspec) is str:
+		m = re.match('^(\d+)(\.\d+)? (year|half-year|quarter|month|day)s?$', pspec)
+		if m:
+			istimerange = False
+		elif len(pspec.split(':')) == 2:
+			(start, end) = pspec.split(':')
+			istimerange = True
+		else:
+			raise Exception('Invalid period specitication')
+	elif type(pspec) is tuple:
+		if len(pspec) == 2:
+			(start, end) = pspec
+		else:
+			raise Exception('Invalid period specitication')
+		istimerange = True
+	else:
+		raise Exception('Invalid period specitication')
+	
+	ps = PSpec()
+	if istimerange:
+		ps.dates = (datetime.strptime(start, '%Y-%m-%d'), 
+			datetime.strptime(end, '%Y-%m-%d'))
+		if ps.dates[0] > ps.dates[1]:
+			raise Exception('Invalid period specitication: start date must be greater than end date.')
+		# self.numberof = (self.dates[1] - self.dates[0]).days
+		ps._fixed_numberof = None
+		ps.unit = 'day'
+	else:
+		g = m.groups()
+		ps._fixed_numberof = float(g[0] + (g[1] or '.0'))
+		ps.unit = g[2]
+	return ps
+
+
 class Period(object):
 	"""
 	Period('1 year')
@@ -20,36 +83,7 @@ class Period(object):
 	"""
 	def __init__(self, pspec, calendar=None):
 		self.calendar = calendar
-		if type(pspec) is str:
-			m = re.match('^(\d+)(\.\d+)? (year|half-year|quarter|month|day)s?$', pspec)
-			if m:
-				istimerange = False
-			elif len(pspec.split(':')) == 2:
-				(start, end) = pspec.split(':')
-				istimerange = True
-			else:
-				raise Exception('Invalid period specitication')
-		elif type(pspec) is tuple:
-			if len(pspec) == 2:
-				(start, end) = pspec
-			else:
-				raise Exception('Invalid period specitication')
-			istimerange = True
-		else:
-			raise Exception('Invalid period specitication')
-		
-		if istimerange:
-			self.dates = (datetime.strptime(start, '%Y-%m-%d'), 
-				datetime.strptime(end, '%Y-%m-%d'))
-			if self.dates[0] > self.dates[1]:
-				raise Exception('Invalid period specitication: start date must be greater than end date.')
-			# self.numberof = (self.dates[1] - self.dates[0]).days
-			self._fixed_numberof = None
-			self.unit = 'day'
-		else:
-			g = m.groups()
-			self._fixed_numberof = float(g[0] + (g[1] or '.0'))
-			self.unit = g[2]
+		self.pspec = pspec
 		
 	def numberof(self, calendar=None):
 		"""docstring for __numberof"""

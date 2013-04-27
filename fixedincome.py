@@ -8,15 +8,6 @@ def enum(**enums):
 	return type('Enum', (), enums)
 
 
-class PSpec(object):
-	"""
-	Class PSpec - stores information to help Period class to handle calculations
-	"""
-	dates = None
-	fixed_numberof = None
-	unit = None
-
-
 def Period(pspec):
 	"""
 	period function parses the period specification string and return a 

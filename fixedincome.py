@@ -17,17 +17,19 @@ class PSpec(object):
 	unit = None
 
 
-def period(pspec):
+def Period(pspec):
 	"""
-	period function parses the period specification and return a PSpec object
+	period function parses the period specification string and return a 
+	PSpec class instance.
+	
 		p = period('15 days')
 		p = period('1 month')
 		p = period('2.5 months')
 		p = period('22.55 months')
 		p = period('1.5 years')
-		p = period('1.5 quarters')	
-		p = period('2012-07-12:2012-07-16')	
-		p = period( ("2012-7-12", "2012-7-22") )	
+		p = period('1.5 quarters')
+		p = period('2012-07-12:2012-07-16')
+		p = period( ("2012-7-12", "2012-7-22") )
 		p = period('2012-12-12:2012-10-16')
 		p = period('2012-07-12:2012-07-22')
 	"""
@@ -52,57 +54,83 @@ def period(pspec):
 	
 	ps = PSpec()
 	if istimerange:
-		ps.dates = (datetime.strptime(start, '%Y-%m-%d'), 
+		dates = (datetime.strptime(start, '%Y-%m-%d'), 
 			datetime.strptime(end, '%Y-%m-%d'))
-		if ps.dates[0] > ps.dates[1]:
+		if dates[0] > dates[1]:
 			raise Exception('Invalid period specitication: start date must be greater than end date.')
 		# self.numberof = (self.dates[1] - self.dates[0]).days
-		ps._fixed_numberof = None
-		ps.unit = 'day'
+		return DateRangePeriod(dates, 'day')
+		# ps._fixed_numberof = None
+		# ps.unit = 'day'
 	else:
 		g = m.groups()
-		ps._fixed_numberof = float(g[0] + (g[1] or '.0'))
-		ps.unit = g[2]
-	return ps
+		# ps._fixed_numberof = float(g[0] + (g[1] or '.0'))
+		# ps.unit = g[2]
+		return FixedTimePeriod(float(g[0] + (g[1] or '.0')), g[2])
+	# return ps
 
 
-class Period(object):
+class FixedTimePeriod(object):
 	"""
 	Period('1 year')
 	Period('1 half-year')
 	Period('1 quarter')
 	Period('1 month')
 	Period('1 day')
+	"""
+	def __init__(self, size, unit):
+		self.calendar = None
+		self.size = size
+		self.unit = unit
+		
+	def numberof(self):
+		"""docstring for __numberof"""
+		return self.size
 	
+	def timefactor(self, daycount):
+		"""
+		Returns an year fraction regarding period definition.
+		This function always returns year's fraction.
+		"""
+		days = self.numberof() * daycount.daysinbase/daycount.freqm[self.unit]
+		return float(days)/daycount.daysinbase
+
+
+class DateRangePeriod(object):
+	"""
 	d1 = "2012-07-12"
 	d2 = "2012-07-27"
-	Period((d1,d2))
+	Period( (d1, d2) )
 	Period('2012-07-12:2012-07-16')
 	Period((d1,d2), calANBIMA)
 	Period('2012-07-12:2012-07-16', calANBIMA)
-	"""
-	def __init__(self, pspec, calendar=None):
-		self.calendar = calendar
-		self.pspec = pspec
-		
-	def numberof(self, calendar=None):
-		"""docstring for __numberof"""
-		if self._fixed_numberof:
-			return self._fixed_numberof
-		else:
-			if calendar:
-				raise NotImplementedError()
-			else:
-				return (self.dates[1] - self.dates[0]).days
 	
-	def timefactor(self, daycount, calendar=None):
-		"""
-		Returns an year fraction regarding period definition. It 
-		always returns year fraction.
-		"""
-		days = self.numberof(calendar) * daycount.daysinbase/daycount.freqm[self.unit]
-		return float(days)/daycount.daysinbase
+	For now we can consider only time unit as day but we should be completely 
+	open to time units as month and year or even quarter. For example:
+	Period('2012-04:2012-12') -> from april, 2012 to december, 2012: 9 months
+	Period('2012-04:2012-12') -> from 2012 to 2012: 1 year
 
+	Period('2012-1:2012-3') -> from 2012 first quarter to 2012 third one: 3 quarters
+	I still don't know how to handle that!
+	
+	This procedure includes starting and ending points.
+	"""
+	def __init__(self, dates, unit='day', calendar=None):
+		self.calendar = calendar
+		self.dates = dates
+		self.unit = unit
+		
+	def numberof(self):
+		"""docstring for __numberof"""
+		return (self.dates[1] - self.dates[0]).days
+	
+	def timefactor(self, daycount):
+		"""
+		Returns an year fraction regarding period definition.
+		This functin always returns year fraction.
+		"""
+		days = self.numberof() * daycount.daysinbase/daycount.freqm[self.unit]
+		return float(days)/daycount.daysinbase
 
 
 class DayCount(object):
@@ -200,9 +228,10 @@ class InterestRate(object):
 	def compound(self, period):
 		"""docstring for compound"""
 		if type(period) is str:
-			period = Period(period)
+			period = Period(period) # TODO: call Period passing calendar as parameter
 		
-		tf = period.timefactor(self._daycount, self.calendar)
+		# tf = period.timefactor(self._daycount, self.calendar)
+		tf = period.timefactor(self._daycount)
 		t = tf * self._daycount.freqm[FREQ_MAP[self.frequency]]
 		return self._compoundingfunc(self.rate, t)
 	

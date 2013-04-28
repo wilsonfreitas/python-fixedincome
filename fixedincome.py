@@ -48,16 +48,10 @@ def Period(pspec):
 			datetime.strptime(end, '%Y-%m-%d'))
 		if dates[0] > dates[1]:
 			raise Exception('Invalid period specitication: start date must be greater than end date.')
-		# self.numberof = (self.dates[1] - self.dates[0]).days
 		return DateRangePeriod(dates, 'day')
-		# ps._fixed_numberof = None
-		# ps.unit = 'day'
 	else:
 		g = m.groups()
-		# ps._fixed_numberof = float(g[0] + (g[1] or '.0'))
-		# ps.unit = g[2]
 		return FixedTimePeriod(float(g[0] + (g[1] or '.0')), g[2])
-	# return ps
 
 
 FREQ_MAP = { # frequency to time unit mapping
@@ -249,12 +243,10 @@ class InterestRate(object):
 	
 	def compound(self, period):
 		"""docstring for compound"""
+		# TODO: the use of strings here shouldn't be allowed instead I might use functions to handle that simplified case.
 		if type(period) is str:
-			period = Period(period) # TODO: period string must contain the calendar specification
+			period = Period(period)
 		
-		# tf = period.timefactor(self._daycount, self.calendar)
-		# tf = period.timefactor(self._daycount)
-		# t = tf * self._daycount.freqm[FREQ_MAP[self.frequency]]
 		t = period.timefreq( self._daycount, self.frequency)
 		return self._compoundingfunc(self.rate, t)
 	

@@ -119,13 +119,44 @@ class TestDayCount(unittest.TestCase):
 	def testActual360(self):
 		"""docstring for testActual360"""
 		dc = DayCount('actual/360')
-		self.assertEqual(dc.unitsize('day'), 360)
+		self.assertEqual(dc.daysinunit('day'), 1)
+		self.assertEqual(dc.daysinunit('month'), 30)
+		self.assertEqual(dc.daysinunit('quarter'), 90)
+		self.assertEqual(dc.daysinunit('half-year'), 180)
 		self.assertEqual(dc.daysinbase, 360)
+		self.assertEqual(dc.daysinunit('year'), dc.daysinbase)
+		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
+		
 		p = Period('2012-07-12:2012-07-16')
 		self.assertEqual(p.timefactor(dc), 4.0/360)
 		p = Period('2012-07-12:2012-07-22')
 		self.assertEqual(p.timefactor(dc), 10.0/360)
 		
+	def testBusiness252(self):
+		"""docstring for testBusiness252"""
+		dc = DayCount('business/252')
+		self.assertEqual(dc.daysinunit('day'), 1)
+		self.assertEqual(dc.daysinunit('month'), 21)
+		self.assertEqual(dc.daysinunit('quarter'), 63)
+		self.assertEqual(dc.daysinunit('half-year'), 126)
+		self.assertEqual(dc.daysinunit('year'), 252)
+		self.assertEqual(dc.daysinunit('year'), dc.daysinbase)
+		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
+		self.assertEqual(dc.daysinbase, 252)
+		
+	def testActual365(self):
+		"""docstring for testActual365"""
+		dc = DayCount('actual/365 Fixed')
+		self.assertEqual(dc.daysinunit('day'), 1)
+		self.assertEqual(dc.daysinbase, 365)
+		self.assertEqual(dc.daysinunit('year'), dc.daysinbase)
+		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
+		
+		p = Period('2012-07-12:2012-07-16')
+		self.assertEqual(p.timefactor(dc), 4.0/365)
+		p = Period('2012-07-12:2012-07-22')
+		self.assertEqual(p.timefactor(dc), 10.0/365)
+
 
 class TestCompounding(unittest.TestCase):
 	def setUp(self):

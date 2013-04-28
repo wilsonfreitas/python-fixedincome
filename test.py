@@ -79,7 +79,7 @@ class TestDayCount(unittest.TestCase):
 	def testDayCount(self):
 		"""Testing day count rules"""
 		dc = DayCount('actual/365 Fixed')
-		self.assertEqual(dc.freqm['day'], 365)
+		self.assertEqual(dc.unitsize('day'), 365)
 		# ---
 		p = Period('1 year')
 		self.assertEqual(p.timefactor(dc), 1)
@@ -97,7 +97,7 @@ class TestDayCount(unittest.TestCase):
 		self.assertEqual(p.timefactor(dc), 1.0/dc.daysinbase)
 		# +++
 		dc = DayCount('business/252')
-		self.assertEqual(dc.freqm['day'], 252)
+		self.assertEqual(dc.unitsize('day'), 252)
 		p = Period('2012-07-12:2012-10-16')
 		self.assertEqual(p.timefactor(dc), 96.0/252)
 		# ---
@@ -119,7 +119,7 @@ class TestDayCount(unittest.TestCase):
 	def testActual360(self):
 		"""docstring for testActual360"""
 		dc = DayCount('actual/360')
-		self.assertEqual(dc.freqm['day'], 360)
+		self.assertEqual(dc.unitsize('day'), 360)
 		self.assertEqual(dc.daysinbase, 360)
 		p = Period('2012-07-12:2012-07-16')
 		self.assertEqual(p.timefactor(dc), 4.0/360)

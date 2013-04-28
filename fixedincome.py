@@ -68,22 +68,17 @@ FREQ_MAP = { # frequency to time unit mapping
 	'daily': 'day'
 }
 
-class FixedTimePeriod(object):
+class GenericPeriod(object):
 	"""
-	Period('1 year')
-	Period('1 half-year')
-	Period('1 quarter')
-	Period('1 month')
-	Period('1 day')
+	GenericPeriod class
+	
+	This class accommodates methods for time computing.
 	"""
-	def __init__(self, size, unit):
-		self.calendar = None
-		self.size = size
-		self.unit = unit
-		
+	
 	def numberof(self):
-		"""docstring for __numberof"""
-		return self.size
+		"""docstring for numberof"""
+		raise NotImplemented('The method numberof is not implemented for this \
+			class. User FixedTimePeriod or DateRangePeriod instead.')
 	
 	def timefactor(self, daycount):
 		"""
@@ -102,7 +97,25 @@ class FixedTimePeriod(object):
 		return tf * daycount.unitsize(FREQ_MAP[frequency])
 
 
-class DateRangePeriod(object):
+class FixedTimePeriod(GenericPeriod):
+	"""
+	Period('1 year')
+	Period('1 half-year')
+	Period('1 quarter')
+	Period('1 month')
+	Period('1 day')
+	"""
+	def __init__(self, size, unit):
+		self.calendar = None
+		self.size = size
+		self.unit = unit
+		
+	def numberof(self):
+		"""docstring for __numberof"""
+		return self.size
+
+
+class DateRangePeriod(GenericPeriod):
 	"""
 	d1 = "2012-07-12"
 	d2 = "2012-07-27"
@@ -129,22 +142,6 @@ class DateRangePeriod(object):
 	def numberof(self):
 		"""docstring for __numberof"""
 		return (self.dates[1] - self.dates[0]).days
-	
-	def timefactor(self, daycount):
-		"""
-		Returns an year fraction regarding period definition.
-		This functin always returns year fraction.
-		"""
-		days = self.numberof() * daycount.daysinunit(self.unit)
-		return float(days)/daycount.daysinbase
-	
-	def timefreq(self, daycount, frequency):
-		"""
-		timefreq returns the amount of time contained into the period adjusted 
-		to the given frequency.
-		"""
-		tf = self.timefactor(daycount)
-		return tf * daycount.unitsize(FREQ_MAP[frequency])
 
 
 class DayCount(object):

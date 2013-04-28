@@ -43,7 +43,6 @@ def Period(pspec):
 	else:
 		raise Exception('Invalid period specitication')
 	
-	ps = PSpec()
 	if istimerange:
 		dates = (datetime.strptime(start, '%Y-%m-%d'), 
 			datetime.strptime(end, '%Y-%m-%d'))
@@ -83,8 +82,24 @@ class FixedTimePeriod(object):
 		Returns an year fraction regarding period definition.
 		This function always returns year's fraction.
 		"""
-		days = self.numberof() * daycount.daysinbase/daycount.freqm[self.unit]
+		days = self.numberof() * daycount.daysinunit(self.unit)
+		
+		print 
+		print self.unit
+		print 'SIZ', self.numberof()
+		print 'DIU', daycount.daysinunit(self.unit)
+		print 'DIB', daycount.daysinbase
+		print float(days)/daycount.daysinbase
+		
 		return float(days)/daycount.daysinbase
+	
+	def timefreq(self, daycount, frequency):
+		"""
+		timefreq returns the amount of time contained into the period adjusted 
+		to the given frequency.
+		"""
+		tf = self.timefactor(daycount)
+		return tf * daycount.unitsize(FREQ_MAP[frequency])
 
 
 class DateRangePeriod(object):
@@ -120,8 +135,16 @@ class DateRangePeriod(object):
 		Returns an year fraction regarding period definition.
 		This functin always returns year fraction.
 		"""
-		days = self.numberof() * daycount.daysinbase/daycount.freqm[self.unit]
+		days = self.numberof() * daycount.daysinunit(self.unit)
 		return float(days)/daycount.daysinbase
+	
+	def timefreq(self, daycount, frequency):
+		"""
+		timefreq returns the amount of time contained into the period adjusted 
+		to the given frequency.
+		"""
+		tf = self.timefactor(daycount)
+		return tf * daycount.unitsize(FREQ_MAP[frequency])
 
 
 class DayCount(object):
@@ -143,7 +166,7 @@ class DayCount(object):
 	
 	def __init__(self, dc):
 		self._daysinbase = self.DAYCOUNTS[dc]
-		self.freqm = { # frequency multiplier
+		self._unitsize = { # frequency multiplier
 			'year': 1,
 			'half-year': 2,
 			'quarter': 4,
@@ -152,10 +175,28 @@ class DayCount(object):
 		}
 	
 	def __getdaysinbase(self):
-		"""docstring for __getdaysinbase"""
+		"""
+		Private get method for the read-only property daysinbase.
+		"""
 		return self._daysinbase
 	daysinbase = property(__getdaysinbase)
 	
+	def daysinunit(self, unit):
+		"""
+		timeunit method returns the amount of days in base, for a given time 
+		unit (year, month, day, ...). For example, the business/252 day count 
+		rule has 252 days in base, so if you have a period of time with a time
+		unit of month then you use 21 days for each month.
+		"""
+		return float(self.daysinbase)/self.unitsize(unit)
+	
+	def unitsize(self, unit):
+		"""
+		unitsize returns the amount of time for one year related to a unit and
+		to this daycount rule.
+		"""
+		return self._unitsize[unit]
+
 
 class Calendar(object):
 	"""docstring for Calendar"""
@@ -170,7 +211,8 @@ class Calendar(object):
 		# enddate will be the last day of that end year
 		self.startdate = None
 		self.enddate = None
-		
+
+
 class Compounding(object):
 	"""docstring for Compounding"""
 	@staticmethod
@@ -189,7 +231,7 @@ class Compounding(object):
 		return exp(r*t)
 
 
-FREQ_MAP = {
+FREQ_MAP = { # frequency to time unit mapping
 	'annual': 'year',
 	'semi-annual': 'half-year',
 	'quarterly': 'quarter',
@@ -219,11 +261,12 @@ class InterestRate(object):
 	def compound(self, period):
 		"""docstring for compound"""
 		if type(period) is str:
-			period = Period(period) # TODO: call Period passing calendar as parameter
+			period = Period(period) # TODO: period string must contain the calendar specification
 		
 		# tf = period.timefactor(self._daycount, self.calendar)
-		tf = period.timefactor(self._daycount)
-		t = tf * self._daycount.freqm[FREQ_MAP[self.frequency]]
+		# tf = period.timefactor(self._daycount)
+		# t = tf * self._daycount.freqm[FREQ_MAP[self.frequency]]
+		t = period.timefreq( self._daycount, self.frequency)
 		return self._compoundingfunc(self.rate, t)
 	
 	# write conversion functions: given other settings generate a different rate

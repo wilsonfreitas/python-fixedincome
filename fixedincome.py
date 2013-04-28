@@ -60,6 +60,14 @@ def Period(pspec):
 	# return ps
 
 
+FREQ_MAP = { # frequency to time unit mapping
+	'annual': 'year',
+	'semi-annual': 'half-year',
+	'quarterly': 'quarter',
+	'monthly': 'month',
+	'daily': 'day'
+}
+
 class FixedTimePeriod(object):
 	"""
 	Period('1 year')
@@ -83,14 +91,6 @@ class FixedTimePeriod(object):
 		This function always returns year's fraction.
 		"""
 		days = self.numberof() * daycount.daysinunit(self.unit)
-		
-		print 
-		print self.unit
-		print 'SIZ', self.numberof()
-		print 'DIU', daycount.daysinunit(self.unit)
-		print 'DIB', daycount.daysinbase
-		print float(days)/daycount.daysinbase
-		
 		return float(days)/daycount.daysinbase
 	
 	def timefreq(self, daycount, frequency):
@@ -230,14 +230,6 @@ class Compounding(object):
 		"""docstring for compounding_continuous"""
 		return exp(r*t)
 
-
-FREQ_MAP = { # frequency to time unit mapping
-	'annual': 'year',
-	'semi-annual': 'half-year',
-	'quarterly': 'quarter',
-	'monthly': 'month',
-	'daily': 'day'
-}
 
 # rate = '6%% annual simple (actual/365 Fixed)'
 # rate = '0.09 annual compounded business/252 calANBIMA'

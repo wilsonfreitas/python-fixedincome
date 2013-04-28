@@ -75,9 +75,9 @@ class GenericPeriod(object):
 	This class accommodates methods for time computing.
 	"""
 	
-	def numberof(self):
+	def size(self):
 		"""docstring for numberof"""
-		raise NotImplemented('The method numberof is not implemented for this \
+		raise NotImplementedError('The method numberof is not implemented for this \
 			class. User FixedTimePeriod or DateRangePeriod instead.')
 	
 	def timefactor(self, daycount):
@@ -85,7 +85,7 @@ class GenericPeriod(object):
 		Returns an year fraction regarding period definition.
 		This function always returns year's fraction.
 		"""
-		days = self.numberof() * daycount.daysinunit(self.unit)
+		days = self.size() * daycount.daysinunit(self.unit)
 		return float(days)/daycount.daysinbase
 	
 	def timefreq(self, daycount, frequency):
@@ -107,12 +107,12 @@ class FixedTimePeriod(GenericPeriod):
 	"""
 	def __init__(self, size, unit):
 		self.calendar = None
-		self.size = size
+		self._size = size
 		self.unit = unit
 		
-	def numberof(self):
+	def size(self):
 		"""docstring for __numberof"""
-		return self.size
+		return self._size
 
 
 class DateRangePeriod(GenericPeriod):
@@ -139,7 +139,7 @@ class DateRangePeriod(GenericPeriod):
 		self.dates = dates
 		self.unit = unit
 		
-	def numberof(self):
+	def size(self):
 		"""docstring for __numberof"""
 		return (self.dates[1] - self.dates[0]).days
 

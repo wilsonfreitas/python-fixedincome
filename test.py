@@ -13,27 +13,27 @@ class TestPeriod(unittest.TestCase):
 	def testPeriod(self):
 		"""testPeriod: test for fixed period"""
 		p = Period('1 month')
-		self.assertEqual(p.numberof(), 1.0)
+		self.assertEqual(p.size(), 1.0)
 		self.assertEqual(p.unit, 'month')
 		
 		p = Period('2.5 months')
-		self.assertEqual(p.numberof(), 2.5)
+		self.assertEqual(p.size(), 2.5)
 		self.assertEqual(p.unit, 'month')
 		
 		p = Period('22.55 months')
-		self.assertEqual(p.numberof(), 22.55)
+		self.assertEqual(p.size(), 22.55)
 		self.assertEqual(p.unit, 'month')
 		
 		p = Period('1.5 years')
-		self.assertEqual(p.numberof(), 1.5)
+		self.assertEqual(p.size(), 1.5)
 		self.assertEqual(p.unit, 'year')
 		
 		p = Period('1.5 quarters')
-		self.assertEqual(p.numberof(), 1.5)
+		self.assertEqual(p.size(), 1.5)
 		self.assertEqual(p.unit, 'quarter')
 	
 		p = Period('15 days')
-		self.assertEqual(p.numberof(), 15)
+		self.assertEqual(p.size(), 15)
 		self.assertEqual(p.unit, 'day')
 	
 	def testPeriodError(self):
@@ -44,13 +44,13 @@ class TestPeriod(unittest.TestCase):
 	def testTimeInterval(self):
 		"""docstring for testTimeInterval"""
 		p = Period('2012-07-12:2012-07-16')
-		self.assertEqual(p.numberof(), 4)
+		self.assertEqual(p.size(), 4)
 		self.assertEqual(p.unit, 'day')
 	
 	def testTimeIntervalWithDate(self):
 		"""docstring for testTimeIntervalWithDate"""
 		p = Period( ("2012-7-12","2012-7-22") )
-		self.assertEqual(p.numberof(), 10)
+		self.assertEqual(p.size(), 10)
 		self.assertEqual(p.unit, 'day')
 	
 	def testTimeIntervalError(self):
@@ -65,10 +65,10 @@ class TestPeriod(unittest.TestCase):
 		with self.assertRaises(Exception):
 			p = Period((d2,d1))
 		p = Period('2012-07-12:2012-07-22')
-		self.assertEqual(p.numberof(), 10)
+		self.assertEqual(p.size(), 10)
 		self.assertEqual(p.unit, 'day')
 		p = Period('15 days')
-		self.assertEqual(p.numberof(), 15)
+		self.assertEqual(p.size(), 15)
 		self.assertEqual(p.unit, 'day')
 		
 

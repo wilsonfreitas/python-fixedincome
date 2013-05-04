@@ -23,6 +23,7 @@ def Period(pspec):
 		p = period( ("2012-7-12", "2012-7-22") )
 		p = period('2012-12-12:2012-10-16')
 		p = period('2012-07-12:2012-07-22')
+		p = period('2012-07-12:2012-07-22 calANBIMA')
 	"""
 	
 	if type(pspec) is str:
@@ -74,22 +75,6 @@ class GenericPeriod(object):
 		raise NotImplementedError('The method numberof is not implemented for this \
 			class. User FixedTimePeriod or DateRangePeriod instead.')
 	
-	def timefactor(self, daycount):
-		"""
-		Returns an year fraction regarding period definition.
-		This function always returns year's fraction.
-		"""
-		days = self.size() * daycount.daysinunit(self.unit)
-		return float(days)/daycount.daysinbase
-	
-	def timefreq(self, daycount, frequency):
-		"""
-		timefreq returns the amount of time contained into the period adjusted 
-		to the given frequency.
-		"""
-		tf = self.timefactor(daycount)
-		return tf * daycount.unitsize(FREQ_MAP[frequency])
-
 
 class FixedTimePeriod(GenericPeriod):
 	"""
@@ -139,19 +124,16 @@ class DateRangePeriod(GenericPeriod):
 
 
 class DayCount(object):
-	"""docstring for DayCount"""
+	"""DayCount"""
 	DAYCOUNTS = {
 		'30/360': None,
 		'30/360 US': None,
 		'30E/360 ISDA': None,
 		'30E+/360': None, 
-		'actual/actual ICMA': None,
-		'actual/actual ISDA': None,
 		'actual/365 Fixed': 365,
 		'actual/360': 360,
 		'actual/364': 364,
 		'actual/365L': 365,
-		'actual/actual AFB': None,
 		'business/252': 252
 	}
 	
@@ -187,6 +169,22 @@ class DayCount(object):
 		to this daycount rule.
 		"""
 		return self._unitsize[unit]
+	
+	def timefactor(self, period):
+		"""
+		Returns an year fraction regarding period definition.
+		This function always returns year's fraction.
+		"""
+		days = period.size() * self.daysinunit(period.unit)
+		return float(days)/self.daysinbase
+	
+	def timefreq(self, period, frequency):
+		"""
+		timefreq returns the amount of time contained into the period adjusted 
+		to the given frequency.
+		"""
+		tf = self.timefactor(period)
+		return tf * self.unitsize(FREQ_MAP[frequency])
 
 
 class Calendar(object):
@@ -227,7 +225,15 @@ class Compounding(object):
 # rate = '0.06 annual continuous 30/360'
 
 class InterestRate(object):
-	"""docstring for InterestRate"""
+	"""
+	InterestRate class
+	
+	This class receives a calendar instance in its constructor's parameter list
+	because in some cases it's fairly common to user provide that information.
+	Despite of having a default calendar set either into the system or for a given
+	market, we are likely to handle the situation where interest rate has its own
+	calendar and that calendar must be used to discount the cashflows.
+	"""
 	def __init__(self, rate, frequency, compounding, daycount, calendar=None):
 		self.rate = rate
 		self.frequency = frequency
@@ -247,7 +253,8 @@ class InterestRate(object):
 		if type(period) is str:
 			period = Period(period)
 		
-		t = period.timefreq( self._daycount, self.frequency)
+		# TODO: this method of period should receive a calendar as parameter in order to return the right time frequency.
+		t = self._daycount.timefreq(period, self.frequency)
 		return self._compoundingfunc(self.rate, t)
 	
 	# write conversion functions: given other settings generate a different rate

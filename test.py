@@ -10,8 +10,7 @@ class TestPeriod(unittest.TestCase):
 	def setUp(self):
 		pass
 	
-	def testPeriod(self):
-		"""testPeriod: test for fixed period"""
+	def testFixedPeriod(self):
 		p = Period('1 month')
 		self.assertEqual(p.size(), 1.0)
 		self.assertEqual(p.unit, 'month')
@@ -37,29 +36,24 @@ class TestPeriod(unittest.TestCase):
 		self.assertEqual(p.unit, 'day')
 	
 	def testPeriodError(self):
-		"""testPeriodError: test for error in period specification"""
 		with self.assertRaises(Exception):
 			p = Period('1 monthss')
 
 	def testTimeInterval(self):
-		"""docstring for testTimeInterval"""
 		p = Period('2012-07-12:2012-07-16')
 		self.assertEqual(p.size(), 4)
 		self.assertEqual(p.unit, 'day')
 	
 	def testTimeIntervalWithDate(self):
-		"""docstring for testTimeIntervalWithDate"""
 		p = Period( ("2012-7-12","2012-7-22") )
 		self.assertEqual(p.size(), 10)
 		self.assertEqual(p.unit, 'day')
 	
 	def testTimeIntervalError(self):
-		"""docstring for testTimeInterval"""
 		with self.assertRaises(Exception):
 			p = Period('2012-12-12:2012-10-16')
 
 	def testTimeIntervalErrorWithDate(self):
-		"""docstring for testTimeInterval"""
 		d1 = "2012-07-12"
 		d2 = "2012-07-27" # 15 days
 		with self.assertRaises(Exception):
@@ -76,64 +70,7 @@ class TestDayCount(unittest.TestCase):
 	def setUp(self):
 		pass
 	
-	def testDayCount(self):
-		"""Testing day count rules"""
-		dc = DayCount('actual/365 Fixed')
-		self.assertEqual(dc.unitsize('day'), 365)
-		# ---
-		p = Period('1 year')
-		self.assertEqual(p.timefactor(dc), 1)
-		# ---
-		p = Period('1 half-year')
-		self.assertEqual(p.timefactor(dc), 1.0/2)
-		# ---
-		p = Period('1 quarter')
-		self.assertEqual(p.timefactor(dc), 1.0/4)
-		# ---
-		p = Period('1 month')
-		self.assertEqual(round(p.timefactor(dc), 6), round(1.0/12, 6))
-		# ---
-		p = Period('1 day')
-		self.assertEqual(p.timefactor(dc), 1.0/dc.daysinbase)
-		# +++
-		dc = DayCount('business/252')
-		self.assertEqual(dc.unitsize('day'), 252)
-		p = Period('2012-07-12:2012-10-16')
-		self.assertEqual(p.timefactor(dc), 96.0/252)
-		# ---
-		p = Period('1 year')
-		self.assertEqual(p.timefactor(dc), 1)
-		# ---
-		p = Period('1 half-year')
-		self.assertEqual(p.timefactor(dc), 1.0/2)
-		# ---
-		p = Period('1 quarter')
-		self.assertEqual(p.timefactor(dc), 1.0/4)
-		# ---
-		p = Period('1 month')
-		self.assertEqual(round(p.timefactor(dc), 6), round(1.0/12, 6))
-		# ---
-		p = Period('1 day')
-		self.assertEqual(p.timefactor(dc), 1.0/dc.daysinbase)
-	
-	def testActual360(self):
-		"""docstring for testActual360"""
-		dc = DayCount('actual/360')
-		self.assertEqual(dc.daysinunit('day'), 1)
-		self.assertEqual(dc.daysinunit('month'), 30)
-		self.assertEqual(dc.daysinunit('quarter'), 90)
-		self.assertEqual(dc.daysinunit('half-year'), 180)
-		self.assertEqual(dc.daysinbase, 360)
-		self.assertEqual(dc.daysinunit('year'), dc.daysinbase)
-		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
-		
-		p = Period('2012-07-12:2012-07-16')
-		self.assertEqual(p.timefactor(dc), 4.0/360)
-		p = Period('2012-07-12:2012-07-22')
-		self.assertEqual(p.timefactor(dc), 10.0/360)
-		
 	def testBusiness252(self):
-		"""docstring for testBusiness252"""
 		dc = DayCount('business/252')
 		self.assertEqual(dc.daysinunit('day'), 1)
 		self.assertEqual(dc.daysinunit('month'), 21)
@@ -144,18 +81,81 @@ class TestDayCount(unittest.TestCase):
 		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
 		self.assertEqual(dc.daysinbase, 252)
 		
+	def testActual360(self):
+		dc = DayCount('actual/360')
+		self.assertEqual(dc.daysinunit('day'), 1)
+		self.assertEqual(dc.daysinunit('month'), 30)
+		self.assertEqual(dc.daysinunit('quarter'), 90)
+		self.assertEqual(dc.daysinunit('half-year'), 180)
+		self.assertEqual(dc.daysinbase, 360)
+		self.assertEqual(dc.daysinunit('year'), dc.daysinbase)
+		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
+	
+	def test_Actual360_timefactor(self):
+		dc = DayCount('actual/360')
+		p = Period('2012-07-12:2012-07-16')
+		self.assertEqual(dc.timefactor(p), 4.0/dc.daysinbase)
+		p = Period('2012-07-12:2012-07-22')
+		self.assertEqual(dc.timefactor(p), 10.0/dc.daysinbase)
+		
+	def test_Actual360_timefreq(self):
+		dc = DayCount('actual/360')
+		p = Period('2012-07-12:2012-07-16')
+		self.assertAlmostEqual(dc.timefreq(p, 'annual'), 4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'semi-annual'), 2*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'quarterly'), 4*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'monthly'), 12*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'daily'), 4.0)
+		# p = Period('2012-07-12:2012-07-22')
+		# self.assertEqual(dc.timefactor(p), 10.0/360)
+		
 	def testActual365(self):
-		"""docstring for testActual365"""
 		dc = DayCount('actual/365 Fixed')
 		self.assertEqual(dc.daysinunit('day'), 1)
 		self.assertEqual(dc.daysinbase, 365)
 		self.assertEqual(dc.daysinunit('year'), dc.daysinbase)
 		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
-		
+	
+	def test_Actual365_timefactor(self):
+		dc = DayCount('actual/365 Fixed')
 		p = Period('2012-07-12:2012-07-16')
-		self.assertEqual(p.timefactor(dc), 4.0/365)
+		self.assertEqual(dc.timefactor(p), 4.0/dc.daysinbase)
 		p = Period('2012-07-12:2012-07-22')
-		self.assertEqual(p.timefactor(dc), 10.0/365)
+		self.assertEqual(dc.timefactor(p), 10.0/dc.daysinbase)
+	
+	def test_Actual365_timefreq(self):
+		dc = DayCount('actual/365 Fixed')
+		p = Period('2012-07-12:2012-07-16')
+		self.assertAlmostEqual(dc.timefreq(p, 'annual'), 4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'semi-annual'), 2*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'quarterly'), 4*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'monthly'), 12*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, 'daily'), 4.0)
+	
+	def test_timefactor_FixedPeriod(self):
+		dc = DayCount('actual/365 Fixed')
+		p = Period('1 year')
+		self.assertEqual(dc.timefactor(p), 1)
+		p = Period('1 half-year')
+		self.assertEqual(dc.timefactor(p), 1.0/2)
+		p = Period('1 quarter')
+		self.assertEqual(dc.timefactor(p), 1.0/4)
+		p = Period('1 month')
+		self.assertEqual(round(dc.timefactor(p), 6), round(1.0/12, 6))
+		p = Period('1 day')
+		self.assertEqual(dc.timefactor(p), 1.0/dc.daysinbase)
+		
+		dc = DayCount('business/252')
+		p = Period('1 year')
+		self.assertEqual(dc.timefactor(p), 1)
+		p = Period('1 half-year')
+		self.assertEqual(dc.timefactor(p), 1.0/2)
+		p = Period('1 quarter')
+		self.assertEqual(dc.timefactor(p), 1.0/4)
+		p = Period('1 month')
+		self.assertEqual(round(dc.timefactor(p), 6), round(1.0/12, 6))
+		p = Period('1 day')
+		self.assertEqual(dc.timefactor(p), 1.0/dc.daysinbase)
 
 
 class TestCompounding(unittest.TestCase):
@@ -163,17 +163,14 @@ class TestCompounding(unittest.TestCase):
 		pass
 	
 	def testSimpleCompounding(self):
-		"""docstring for testSimpleCompounding"""
 		smp = Compounding.simple
 		self.assertEqual(1 + 0.5*2, smp(0.5, 2))
 
 	def testCompoundedCompounding(self):
-		"""docstring for testCompoundedCompounding"""
 		disc = Compounding.compounded
 		self.assertEqual((1 + 0.5)**2, disc(0.5, 2))
 	
 	def testContinuousCompounding(self):
-		"""docstring for testContinuousCompounding"""
 		cont = Compounding.continuous
 		self.assertEqual(math.exp(0.5*2), cont(0.5, 2))
 	
@@ -183,7 +180,6 @@ class TestInterestRate(unittest.TestCase):
 		pass
 	
 	def testInterestRateDefault(self):
-		"""Testing InterestRate initialization"""
 		ir = InterestRate(0.1, 'annual', 'simple', 'actual/360')
 		smp = Compounding.simple
 		self.assertEqual(ir.compound(Period('1 month')), smp(0.1, 1.0/12))
@@ -193,7 +189,6 @@ class TestInterestRate(unittest.TestCase):
 		self.assertEqual(ir.compound(p), smp(0.1, 10.0/360))
 	
 	def testInterestRateFrequency(self):
-		"""docstring for testInterestRateFrequency"""
 		smp = Compounding.simple
 		ir = InterestRate(0.1, 'monthly', 'simple', 'actual/360')
 		self.assertEqual(ir.compound('1 month'), smp(0.1, 1.0))
@@ -203,7 +198,6 @@ class TestInterestRate(unittest.TestCase):
 		self.assertEqual(ir.compound('1 month'), smp(0.1, 30))
 	
 	def testInterestRateCompounding(self):
-		"""docstring for testInterestRateCompounding"""
 		func = Compounding.compounded
 		ir = InterestRate(0.1, 'annual', 'compounded', 'actual/360')
 		self.assertEqual(ir.compound('1 month'), func(0.1, 1.0/12))

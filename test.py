@@ -208,13 +208,38 @@ class TestInterestRate(unittest.TestCase):
 	
 
 class TestCalendar(unittest.TestCase):
-	def setUp(self):
-		pass
-
-	def testCalendarInstanciation(self):
-		cal = Calendar(holidays="holidays.txt")
-		days = cal.days_between('2012-10-21', '2015-10-21')
-		self.assertEqual(754, days, 'Wrong business days amount')
+	def testCalendar(self):
+		'calendar instanciation'
+		with self.assertRaises(Exception):
+			Calendar('AAA')
+		with self.assertRaises(Exception):
+			Calendar('calAAA')
+		cal = Calendar('calTest')
+		self.assertEqual(cal.startdate.isoformat(), '2001-01-01')
+		self.assertEqual(cal.enddate.isoformat(), '2002-12-31')
+		self.assertEqual(len(cal.holidays), 2)
+		self.assertEqual(date(2001, 1, 1) in cal.holidays, True)
+		self.assertEqual(cal.index[cal.startdate], (1, 1, True))
+		self.assertEqual(cal.index[cal.enddate], (520, 730, False))
+	
+	def test_Calendar_workdays(self):
+		'calendar count of workdays'
+		cal = Calendar('calTest')
+		days = cal.workdays(('2002-01-01', '2002-01-02'))
+		self.assertEqual(0, days, 'Wrong business days amount')
+	
+	def test_Calendar_currentdays(self):
+		'calendar count of currentdays'
+		cal = Calendar('calTest')
+		days = cal.currentdays(('2002-01-01', '2002-01-02'))
+		self.assertEqual(1, days, 'Wrong current days amount')
+	
+	def test_Calendar_isworkday(self):
+		'calendar count of currentdays'
+		cal = Calendar('calTest')
+		self.assertEqual(cal.isworkday('2002-01-01'), False) # New year
+		self.assertEqual(cal.isworkday('2002-01-02'), True)  # First workday
+		self.assertEqual(cal.isworkday('2002-01-05'), False) # Saturday
 
 if __name__ == '__main__':
 	unittest.main(verbosity=2)

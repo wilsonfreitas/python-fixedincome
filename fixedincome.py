@@ -1,6 +1,7 @@
 
 import re
-from datetime import datetime
+import os
+from datetime import datetime, date, timedelta
 from math import exp
 
 
@@ -34,21 +35,21 @@ def Period(pspec):
 			(start, end) = pspec.split(':')
 			istimerange = True
 		else:
-			raise Exception('Invalid period specitication')
+			raise Exception('Invalid period specification')
 	elif type(pspec) is tuple:
 		if len(pspec) == 2:
 			(start, end) = pspec
 		else:
-			raise Exception('Invalid period specitication')
+			raise Exception('Invalid period specification')
 		istimerange = True
 	else:
-		raise Exception('Invalid period specitication')
+		raise Exception('Invalid period specification')
 	
 	if istimerange:
 		dates = (datetime.strptime(start, '%Y-%m-%d'), 
 			datetime.strptime(end, '%Y-%m-%d'))
 		if dates[0] > dates[1]:
-			raise Exception('Invalid period specitication: start date must be greater than end date.')
+			raise Exception('Invalid period specification: start date must be greater than end date.')
 		return DateRangePeriod(dates, 'day')
 	else:
 		g = m.groups()
@@ -189,17 +190,48 @@ class DayCount(object):
 
 class Calendar(object):
 	"""docstring for Calendar"""
-	def __init__(self, arg):
-		self.holidays = None # list of dates
-		self.weekend_days = None # tuple of week days, usually (5,6) (sat,sun)
-		# in Brazil we have ANBIMA's list of holidays so that we could use 
-		# to manage business days computations
-		# So that list has a start year and an ending year and
-		# we have to consider that for setting startdate and enddate
-		# startdate will be the first day of that start year and
-		# enddate will be the last day of that end year
-		self.startdate = None
-		self.enddate = None
+	def __init__(self, cal):
+		if not cal.startswith('cal'):
+			raise Exception('Invalid calendar specification')
+		name = cal.replace('cal', '')
+		fname = name + '.cal'
+		if not os.path.exists(fname):
+			raise Exception('Invalid calendar specification: file not found')
+		self._cal_spec = cal
+		f = open(fname)
+		self.holidays = [datetime.strptime(dt.strip(), '%Y-%m-%d').date() \
+			for dt in f if not dt.strip() is '']
+		f.close()
+		self.startdate = date(self.holidays[0].year, 1, 1)
+		self.enddate = date(self.holidays[-1].year, 12, 31)
+		
+		self.index = {}
+		d1 = timedelta(1)
+		dt = self.startdate
+		w = c = 1
+		while dt <= self.enddate:
+			is_hol = dt in self.holidays or dt.weekday() in (5, 6)
+			self.index[dt] = (w, c, is_hol)
+			c += 1
+			if not is_hol:
+				w += 1
+			dt += d1
+	
+	def workdays(self, dates):
+		d1, d2 = dates
+		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
+		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
+		return self.index[d2][0] - self.index[d1][0]
+	
+	def currentdays(self, dates):
+		d1, d2 = dates
+		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
+		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
+		return self.index[d2][1] - self.index[d1][1]
+	
+	def isworkday(self, dt):
+		dt = datetime.strptime(dt, '%Y-%m-%d').date()
+		return not self.index[dt][2]
 
 
 class Compounding(object):

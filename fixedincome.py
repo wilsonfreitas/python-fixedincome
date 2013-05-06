@@ -14,17 +14,17 @@ def Period(pspec):
 	period function parses the period specification string and return a 
 	PSpec class instance.
 	
-		p = period('15 days')
-		p = period('1 month')
-		p = period('2.5 months')
-		p = period('22.55 months')
-		p = period('1.5 years')
-		p = period('1.5 quarters')
-		p = period('2012-07-12:2012-07-16')
-		p = period( ("2012-7-12", "2012-7-22") )
-		p = period('2012-12-12:2012-10-16')
-		p = period('2012-07-12:2012-07-22')
-		p = period('2012-07-12:2012-07-22 calANBIMA')
+		p = Period('15 days')
+		p = Period('1 month')
+		p = Period('2.5 months')
+		p = Period('22.55 months')
+		p = Period('1.5 years')
+		p = Period('1.5 quarters')
+		p = Period('2012-07-12:2012-07-16')
+		p = Period( ("2012-7-12", "2012-7-22") )
+		p = Period('2012-12-12:2012-10-16')
+		p = Period('2012-07-12:2012-07-22')
+		p = Period('2012-07-12:2012-07-22 calANBIMA')
 	"""
 	
 	if type(pspec) is str:
@@ -86,12 +86,11 @@ class FixedTimePeriod(GenericPeriod):
 	Period('1 day')
 	"""
 	def __init__(self, size, unit):
-		self.calendar = None
 		self._size = size
 		self.unit = unit
 		
 	def size(self):
-		"""docstring for __numberof"""
+		"""This method returns the quantity related to the fixed period."""
 		return self._size
 
 
@@ -102,7 +101,7 @@ class DateRangePeriod(GenericPeriod):
 	Period( (d1, d2) )
 	Period('2012-07-12:2012-07-16')
 	Period((d1,d2), calANBIMA)
-	Period('2012-07-12:2012-07-16', calANBIMA)
+	Period('2012-07-12:2012-07-16 calANBIMA')
 	
 	For now we can consider only time unit as day but we should be completely 
 	open to time units as month and year or even quarter. For example:
@@ -120,7 +119,7 @@ class DateRangePeriod(GenericPeriod):
 		self.unit = unit
 		
 	def size(self):
-		"""docstring for __numberof"""
+		"""This method returns the total amount of days between two dates"""
 		return (self.dates[1] - self.dates[0]).days
 
 

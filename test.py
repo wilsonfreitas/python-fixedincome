@@ -239,6 +239,7 @@ class TestCalendar(unittest.TestCase):
 		with self.assertRaises(Exception):
 			Calendar('calAAA')
 		cal = Calendar('calTest')
+		self.assertEqual(cal, Calendar('calTest'))
 		self.assertEqual(cal.startdate.isoformat(), '2001-01-01')
 		self.assertEqual(cal.enddate.isoformat(), '2002-12-31')
 		self.assertEqual(len(cal.holidays), 2)

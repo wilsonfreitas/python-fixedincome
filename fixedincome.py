@@ -212,39 +212,60 @@ class Calendar(object):
 			raise Exception('Invalid calendar specification: file not found')
 		self._cal_spec = cal
 		f = open(fname)
-		self.holidays = [datetime.strptime(dt.strip(), '%Y-%m-%d').date() \
+		self._holidays = [datetime.strptime(dt.strip(), '%Y-%m-%d').date() \
 			for dt in f if not dt.strip() is '']
 		f.close()
-		self.startdate = date(self.holidays[0].year, 1, 1)
-		self.enddate = date(self.holidays[-1].year, 12, 31)
+		self._startdate = date(self._holidays[0].year, 1, 1)
+		self._enddate = date(self._holidays[-1].year, 12, 31)
 		
-		self.index = {}
+		self._index = {}
 		d1 = timedelta(1)
-		dt = self.startdate
+		dt = self._startdate
 		w = c = 1
-		while dt <= self.enddate:
-			is_hol = dt in self.holidays or dt.weekday() in (5, 6)
-			self.index[dt] = (w, c, is_hol)
+		while dt <= self._enddate:
+			is_hol = dt in self._holidays or dt.weekday() in (5, 6)
+			self._index[dt] = (w, c, is_hol)
 			c += 1
 			if not is_hol:
 				w += 1
 			dt += d1
 	
+	def __get_startdate(self):
+		return self._startdate
+	startdate = property(__get_startdate)
+	
+	def __get_enddate(self):
+		return self._enddate
+	enddate = property(__get_enddate)
+	
+	def __get_holidays(self):
+		return self._holidays
+	holidays = property(__get_holidays)
+	
+	def __get_index(self):
+		return self._index
+	index = property(__get_index)
+	
+	def __eq__(self, other):
+		return self.startdate == other.startdate and \
+			self.enddate == other.enddate and \
+			self._cal_spec == other._cal_spec
+	
 	def workdays(self, dates):
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
-		return self.index[d2][0] - self.index[d1][0]
+		return self._index[d2][0] - self._index[d1][0]
 	
 	def currentdays(self, dates):
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
-		return self.index[d2][1] - self.index[d1][1]
+		return self._index[d2][1] - self._index[d1][1]
 	
 	def isworkday(self, dt):
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
-		return not self.index[dt][2]
+		return not self._index[dt][2]
 
 
 class Compounding(object):

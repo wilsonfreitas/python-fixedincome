@@ -46,8 +46,8 @@ def Period(pspec):
 		raise Exception('Invalid period specification')
 	
 	if istimerange:
-		dates = (datetime.strptime(start, '%Y-%m-%d'), 
-			datetime.strptime(end, '%Y-%m-%d'))
+		dates = (datetime.strptime(start, '%Y-%m-%d').date(), 
+			datetime.strptime(end, '%Y-%m-%d').date())
 		if dates[0] > dates[1]:
 			raise Exception('Invalid period specification: start date must be greater than end date.')
 		return DateRangePeriod(dates, 'day')
@@ -90,7 +90,7 @@ class FixedTimePeriod(GenericPeriod):
 		self.unit = unit
 		
 	def size(self):
-		"""This method returns the quantity related to the fixed period."""
+		"""Return the quantity related to the fixed period."""
 		return self._size
 
 
@@ -98,29 +98,43 @@ class DateRangePeriod(GenericPeriod):
 	"""
 	d1 = "2012-07-12"
 	d2 = "2012-07-27"
-	Period( (d1, d2) )
+	Period((d1, d2))
 	Period('2012-07-12:2012-07-16')
-	Period((d1,d2), calANBIMA)
-	Period('2012-07-12:2012-07-16 calANBIMA')
 	
-	For now we can consider only time unit as day but we should be completely 
-	open to time units as month and year or even quarter. For example:
+	For now we can consider only the *day* time unit but we should be completely 
+	open to other time units such as *month* and *year* or even *quarter*. 
+	For example:
 	Period('2012-04:2012-12') -> from april, 2012 to december, 2012: 9 months
-	Period('2012-04:2012-12') -> from 2012 to 2012: 1 year
-
+	Period('2012:2012') -> from 2012 to 2012: 1 year
 	Period('2012-1:2012-3') -> from 2012 first quarter to 2012 third one: 3 quarters
+	
 	I still don't know how to handle that!
 	
 	This procedure includes starting and ending points.
 	"""
-	def __init__(self, dates, unit='day', calendar=None):
-		self.calendar = calendar
+	def __init__(self, dates, unit='day'):
 		self.dates = dates
 		self.unit = unit
 		
 	def size(self):
-		"""This method returns the total amount of days between two dates"""
+		"""Return the total amount of days between two dates"""
 		return (self.dates[1] - self.dates[0]).days
+
+
+class CalendarRangePeriod(DateRangePeriod):
+	"""
+	A CalendarRangePeriod is a DateRangePeriod which uses a Calendar to
+	compute the amount of days contained into the underlying Period.
+	"""
+	def __init__(self, period, calendar):
+		super(CalendarRangePeriod, self).__init__(period.dates, unit='day')
+		self.calendar = calendar
+	
+	def size(self):
+		'Return the amount of working days into period.'
+		d1 = self.dates[0].isoformat()
+		d2 = self.dates[1].isoformat()
+		return self.calendar.workdays((d1, d2))
 
 
 class DayCount(object):
@@ -270,21 +284,22 @@ class InterestRate(object):
 		self.frequency = frequency
 		self.daycount = daycount
 		self.compounding = compounding
-		self.calendar = calendar
 		self._compoundingfunc = getattr(Compounding, self.compounding)
 		self._daycount = DayCount(self.daycount)
+		if calendar:
+			self.calendar = Calendar(calendar)
+		else:
+			self.calendar = None
 	
 	def discount(self, period):
-		"""docstring for discount"""
+		"""Return the discount factor"""
 		return 1.0/compound(period)
 	
 	def compound(self, period):
-		"""docstring for compound"""
-		# TODO: the use of strings here shouldn't be allowed instead I might use functions to handle that simplified case.
-		if type(period) is str:
-			period = Period(period)
+		"""Return the compounding factor"""
+		if self.calendar:
+			period = CalendarRangePeriod(period, self.calendar)
 		
-		# TODO: this method of period should receive a calendar as parameter in order to return the right time frequency.
 		t = self._daycount.timefreq(period, self.frequency)
 		return self._compoundingfunc(self.rate, t)
 	

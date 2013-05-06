@@ -64,7 +64,14 @@ class TestPeriod(unittest.TestCase):
 		p = Period('15 days')
 		self.assertEqual(p.size(), 15)
 		self.assertEqual(p.unit, 'day')
-		
+	
+	def test_CalendarRangePeriod(self):
+		p = Period('2002-07-12:2002-07-22')
+		cal = Calendar('calTest')
+		c = CalendarRangePeriod(p, cal)
+		self.assertEqual(p.dates, c.dates)
+		self.assertEqual(c.calendar, cal)
+		self.assertEqual(cal.workdays(('2002-07-12', '2002-07-22')), c.size())
 
 class TestDayCount(unittest.TestCase):
 	def setUp(self):
@@ -188,23 +195,40 @@ class TestInterestRate(unittest.TestCase):
 		p = Period( ("2012-7-12", "2012-7-22") )
 		self.assertEqual(ir.compound(p), smp(0.1, 10.0/360))
 	
+	def testInterestRateDefault(self):
+		ir = InterestRate(0.1, 'annual', 'simple', 'business/252', calendar='calTest')
+		smp = Compounding.simple
+		comp_val = smp(0.1, 6.0/252)
+		
+		p = Period( ("2002-7-12", "2002-7-22") )
+		comp = ir.compound(p)
+		self.assertEqual(comp, comp_val)
+	
 	def testInterestRateFrequency(self):
 		smp = Compounding.simple
+		p = Period('1 month')
+		
 		ir = InterestRate(0.1, 'monthly', 'simple', 'actual/360')
-		self.assertEqual(ir.compound('1 month'), smp(0.1, 1.0))
+		self.assertEqual(ir.compound(p), smp(0.1, 1.0))
+		
 		ir = InterestRate(0.1, 'semi-annual', 'simple', 'actual/360')
-		self.assertEqual(ir.compound('1 month'), smp(0.1, 1.0/6))
+		self.assertEqual(ir.compound(p), smp(0.1, 1.0/6))
+		
 		ir = InterestRate(0.1, 'daily', 'simple', 'actual/360')
-		self.assertEqual(ir.compound('1 month'), smp(0.1, 30))
+		self.assertEqual(ir.compound(p), smp(0.1, 30))
 	
 	def testInterestRateCompounding(self):
 		func = Compounding.compounded
+		p = Period('1 month')
+		
 		ir = InterestRate(0.1, 'annual', 'compounded', 'actual/360')
-		self.assertEqual(ir.compound('1 month'), func(0.1, 1.0/12))
+		self.assertEqual(ir.compound(p), func(0.1, 1.0/12))
+		
 		ir = InterestRate(0.1, 'semi-annual', 'compounded', 'actual/360')
-		self.assertEqual(ir.compound('1 month'), func(0.1, 1.0/6))
+		self.assertEqual(ir.compound(p), func(0.1, 1.0/6))
+		
 		ir = InterestRate(0.1, 'daily', 'compounded', 'actual/360')
-		self.assertEqual(ir.compound('1 month'), func(0.1, 30))
+		self.assertEqual(ir.compound(p), func(0.1, 30))
 	
 
 class TestCalendar(unittest.TestCase):
@@ -227,6 +251,7 @@ class TestCalendar(unittest.TestCase):
 		cal = Calendar('calTest')
 		days = cal.workdays(('2002-01-01', '2002-01-02'))
 		self.assertEqual(0, days, 'Wrong business days amount')
+		self.assertEqual(cal.workdays(('2002-07-12', '2002-07-22')), 6)
 	
 	def test_Calendar_currentdays(self):
 		'calendar count of currentdays'

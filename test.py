@@ -7,9 +7,6 @@ from datetime import date
 from fixedincome import *
 
 class TestPeriod(unittest.TestCase):
-	def setUp(self):
-		pass
-	
 	def testFixedPeriod(self):
 		p = Period('1 month')
 		self.assertEqual(p.size(), 1.0)
@@ -74,8 +71,10 @@ class TestPeriod(unittest.TestCase):
 		self.assertEqual(cal.workdays(('2002-07-12', '2002-07-22')), c.size())
 
 class TestDayCount(unittest.TestCase):
-	def setUp(self):
-		pass
+	def test_DayCount(self):
+		dc = DayCount('business/252')
+		self.assertEqual(dc, DayCount('business/252'))
+		self.assertNotEqual(dc, DayCount('actual/365 Fixed'))
 	
 	def testBusiness252(self):
 		dc = DayCount('business/252')
@@ -166,9 +165,6 @@ class TestDayCount(unittest.TestCase):
 
 
 class TestCompounding(unittest.TestCase):
-	def setUp(self):
-		pass
-	
 	def testSimpleCompounding(self):
 		smp = Compounding.simple
 		self.assertEqual(1 + 0.5*2, smp(0.5, 2))
@@ -183,9 +179,6 @@ class TestCompounding(unittest.TestCase):
 	
 
 class TestInterestRate(unittest.TestCase):
-	def setUp(self):
-		pass
-	
 	def testInterestRateDefault(self):
 		ir = InterestRate(0.1, 'annual', 'simple', 'actual/360')
 		smp = Compounding.simple

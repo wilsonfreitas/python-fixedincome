@@ -56,14 +56,6 @@ def Period(pspec):
 		return FixedTimePeriod(float(g[0] + (g[1] or '.0')), g[2])
 
 
-FREQ_MAP = { # frequency to time unit mapping
-	'annual': 'year',
-	'semi-annual': 'half-year',
-	'quarterly': 'quarter',
-	'monthly': 'month',
-	'daily': 'day'
-}
-
 class GenericPeriod(object):
 	"""
 	GenericPeriod class
@@ -139,7 +131,7 @@ class CalendarRangePeriod(DateRangePeriod):
 
 class DayCount(object):
 	"""DayCount"""
-	DAYCOUNTS = {
+	_daycounts = {
 		'30/360': None,
 		'30/360 US': None,
 		'30E/360 ISDA': None,
@@ -150,9 +142,18 @@ class DayCount(object):
 		'actual/365L': 365,
 		'business/252': 252
 	}
+	_freq_map = { # frequency to time unit mapping
+		# adjective : noun
+		'annual': 'year',
+		'semi-annual': 'half-year',
+		'quarterly': 'quarter',
+		'monthly': 'month',
+		'daily': 'day'
+	}
 	
 	def __init__(self, dc):
-		self._daysinbase = self.DAYCOUNTS[dc]
+		self._daycount = dc
+		self._daysinbase = self._daycounts[dc]
 		self._unitsize = { # frequency multiplier
 			'year': 1,
 			'half-year': 2,
@@ -167,6 +168,9 @@ class DayCount(object):
 		"""
 		return self._daysinbase
 	daysinbase = property(__getdaysinbase)
+	
+	def __eq__(self, other):
+		return self._daycount == other._daycount
 	
 	def daysinunit(self, unit):
 		"""
@@ -198,7 +202,7 @@ class DayCount(object):
 		to the given frequency.
 		"""
 		tf = self.timefactor(period)
-		return tf * self.unitsize(FREQ_MAP[frequency])
+		return tf * self.unitsize(self._freq_map[frequency])
 
 
 class Calendar(object):

@@ -5,42 +5,80 @@ from datetime import datetime, date, timedelta
 from math import exp
 
 
-def enum(**enums):
-	return type('Enum', (), enums)
+# rate = '6%% annual simple (actual/365 Fixed)'
+# rate = '0.09 annual compounded business/252 calANBIMA'
+# rate = '0.06 annual continuous 30/360'
 
-
-def Period(pspec):
+def ir(irspec):
 	"""
-	period function parses the period specification string and return a 
-	PSpec class instance.
+	Return a InterestRate object for a given interest rate specification.
+	The interest rate specification is a string like:
 	
-		p = Period('15 days')
-		p = Period('1 month')
-		p = Period('2.5 months')
-		p = Period('22.55 months')
-		p = Period('1.5 years')
-		p = Period('1.5 quarters')
-		p = Period('2012-07-12:2012-07-16')
-		p = Period( ("2012-7-12", "2012-7-22") )
-		p = Period('2012-12-12:2012-10-16')
-		p = Period('2012-07-12:2012-07-22')
-		p = Period('2012-07-12:2012-07-22 calANBIMA')
+	'0.06 annual simple actual/365'
+	'0.09 annual compounded business/252 calANBIMA'
+	'0.06 annual continuous 30/360'
+	
+	The specification must contain all information required to instanciate a 
+	InterestRate object. The InterestRate constructor requires:
+	- rate
+	- frequency
+	- compounding
+	- daycount
+	and depending on which daycount is used the calendar must be set. Otherwise,
+	it defaults to None.
 	"""
-	
-	if type(pspec) is str:
-		m = re.match('^(\d+)(\.\d+)? (year|half-year|quarter|month|day)s?$', pspec)
+	calendar = None
+	tokens = irspec.split()
+	for tok in tokens:
+		m = re.match('^(\d+)(\.\d+)?$', tok)
 		if m:
-			istimerange = False
-		elif len(pspec.split(':')) == 2:
-			(start, end) = pspec.split(':')
-			istimerange = True
-		else:
-			raise Exception('Invalid period specification')
-	elif type(pspec) is tuple:
-		if len(pspec) == 2:
-			(start, end) = pspec
-		else:
-			raise Exception('Invalid period specification')
+			rate = float(m.group())
+		elif tok in Compounding.names:
+			compounding = tok
+		elif tok in DayCount.names:
+			daycount = tok
+		elif tok in DayCount.freqs:
+			frequency = tok
+		elif tok.startswith('cal'):
+			calendar = tok.replace('cal', '')
+	return InterestRate(rate, frequency, compounding, daycount, calendar)
+
+def compound(ir, period):
+	"""
+	Return the compounding factor regarding an interst rate and a period.
+	"""
+	return ir.compound(period)
+
+
+def discount(ir, period):
+	"""
+	Return the discount factor regarding an interest rate and a period.
+	"""
+	return ir.discount(period)
+
+def period(pspec):
+	"""
+	Return a FixedTimePeriod or a DateRangePeriod instance, depending on the 
+	period specification string passed.
+	
+		# FixedTimePeriod
+		p = period('15 days')
+		p = period('1 month')
+		p = period('2.5 months')
+		p = period('22.55 months')
+		p = period('1.5 years')
+		p = period('1.5 quarters')
+		
+		# DateRangePeriod
+		p = period('2012-07-12:2012-07-16')
+		p = period('2012-07-12:2012-07-22')
+	"""
+	
+	m = re.match('^(\d+)(\.\d+)? (year|half-year|quarter|month|day)s?$', pspec)
+	if m:
+		istimerange = False
+	elif len(pspec.split(':')) == 2:
+		(start, end) = pspec.split(':')
 		istimerange = True
 	else:
 		raise Exception('Invalid period specification')
@@ -62,6 +100,8 @@ class GenericPeriod(object):
 	
 	This class accommodates methods for time computing.
 	"""
+	def __init__(self, unit):
+		self.unit = unit
 	
 	def size(self):
 		"""docstring for numberof"""
@@ -71,15 +111,15 @@ class GenericPeriod(object):
 
 class FixedTimePeriod(GenericPeriod):
 	"""
-	Period('1 year')
-	Period('1 half-year')
-	Period('1 quarter')
-	Period('1 month')
-	Period('1 day')
+	period('1 year')
+	period('1 half-year')
+	period('1 quarter')
+	period('1 month')
+	period('1 day')
 	"""
 	def __init__(self, size, unit):
+		super(FixedTimePeriod, self).__init__(unit)
 		self._size = size
-		self.unit = unit
 		
 	def size(self):
 		"""Return the quantity related to the fixed period."""
@@ -90,23 +130,23 @@ class DateRangePeriod(GenericPeriod):
 	"""
 	d1 = "2012-07-12"
 	d2 = "2012-07-27"
-	Period((d1, d2))
-	Period('2012-07-12:2012-07-16')
+	period((d1, d2))
+	period('2012-07-12:2012-07-16')
 	
 	For now we can consider only the *day* time unit but we should be completely 
 	open to other time units such as *month* and *year* or even *quarter*. 
 	For example:
-	Period('2012-04:2012-12') -> from april, 2012 to december, 2012: 9 months
-	Period('2012:2012') -> from 2012 to 2012: 1 year
-	Period('2012-1:2012-3') -> from 2012 first quarter to 2012 third one: 3 quarters
+	period('2012-04:2012-12') -> from april, 2012 to december, 2012: 9 months
+	period('2012:2012') -> from 2012 to 2012: 1 year
+	period('2012-1:2012-3') -> from 2012 first quarter to 2012 third one: 3 quarters
 	
 	I still don't know how to handle that!
 	
 	This procedure includes starting and ending points.
 	"""
 	def __init__(self, dates, unit='day'):
+		super(DateRangePeriod, self).__init__(unit)
 		self.dates = dates
-		self.unit = unit
 		
 	def size(self):
 		"""Return the total amount of days between two dates"""
@@ -116,7 +156,7 @@ class DateRangePeriod(GenericPeriod):
 class CalendarRangePeriod(DateRangePeriod):
 	"""
 	A CalendarRangePeriod is a DateRangePeriod which uses a Calendar to
-	compute the amount of days contained into the underlying Period.
+	compute the amount of days contained into the underlying period.
 	"""
 	def __init__(self, period, calendar):
 		super(CalendarRangePeriod, self).__init__(period.dates, unit='day')
@@ -136,7 +176,7 @@ class DayCount(object):
 		'30/360 US': None,
 		'30E/360 ISDA': None,
 		'30E+/360': None, 
-		'actual/365 Fixed': 365,
+		'actual/365': 365,
 		'actual/360': 360,
 		'actual/364': 364,
 		'actual/365L': 365,
@@ -204,14 +244,13 @@ class DayCount(object):
 		tf = self.timefactor(period)
 		return tf * self.unitsize(self._freq_map[frequency])
 
+DayCount.names = tuple(DayCount._daycounts.keys())
+DayCount.freqs = tuple(DayCount._freq_map.keys())
 
 class Calendar(object):
 	"""docstring for Calendar"""
 	def __init__(self, cal):
-		if not cal.startswith('cal'):
-			raise Exception('Invalid calendar specification')
-		name = cal.replace('cal', '')
-		fname = name + '.cal'
+		fname = cal + '.cal'
 		if not os.path.exists(fname):
 			raise Exception('Invalid calendar specification: file not found')
 		self._cal_spec = cal
@@ -273,26 +312,23 @@ class Calendar(object):
 
 
 class Compounding(object):
-	"""docstring for Compounding"""
 	@staticmethod
 	def simple(r, t):
-		"""docstring for compounding_simple"""
+		"""simple compounding factor"""
 		return 1 + r*t
 	
 	@staticmethod
 	def compounded(r, t):
-		"""docstring for compounding_compounded"""
+		"""compounded compounding factor"""
 		return (1 + r)**t
 	
 	@staticmethod
 	def continuous(r, t):
-		"""docstring for compounding_continuous"""
+		"""continuous compounding factor"""
 		return exp(r*t)
 
+Compounding.names = tuple([i for i in dir(Compounding) if not i.startswith('_')])
 
-# rate = '6%% annual simple (actual/365 Fixed)'
-# rate = '0.09 annual compounded business/252 calANBIMA'
-# rate = '0.06 annual continuous 30/360'
 
 class InterestRate(object):
 	"""
@@ -304,6 +340,7 @@ class InterestRate(object):
 	market, we are likely to handle the situation where interest rate has its own
 	calendar and that calendar must be used to discount the cashflows.
 	"""
+	# TODO: this class must receive the instance of daycount, compounding, frequency, and calendar. It shouldn't receive strings anymore.
 	def __init__(self, rate, frequency, compounding, daycount, calendar=None):
 		self.rate = rate
 		self.frequency = frequency

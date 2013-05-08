@@ -6,65 +6,65 @@ import unittest
 from datetime import date
 from fixedincome import *
 
+class TestCompounding(unittest.TestCase):
+	def test_names(self):
+		self.assertEqual( ('compounded', 'continuous', 'simple'), Compounding.names )
+	
+
 class TestPeriod(unittest.TestCase):
 	def testFixedPeriod(self):
-		p = Period('1 month')
+		p = period('1 month')
 		self.assertEqual(p.size(), 1.0)
 		self.assertEqual(p.unit, 'month')
 		
-		p = Period('2.5 months')
+		p = period('2.5 months')
 		self.assertEqual(p.size(), 2.5)
 		self.assertEqual(p.unit, 'month')
 		
-		p = Period('22.55 months')
+		p = period('22.55 months')
 		self.assertEqual(p.size(), 22.55)
 		self.assertEqual(p.unit, 'month')
 		
-		p = Period('1.5 years')
+		p = period('1.5 years')
 		self.assertEqual(p.size(), 1.5)
 		self.assertEqual(p.unit, 'year')
 		
-		p = Period('1.5 quarters')
+		p = period('1.5 quarters')
 		self.assertEqual(p.size(), 1.5)
 		self.assertEqual(p.unit, 'quarter')
 	
-		p = Period('15 days')
+		p = period('15 days')
 		self.assertEqual(p.size(), 15)
 		self.assertEqual(p.unit, 'day')
 	
 	def testPeriodError(self):
 		with self.assertRaises(Exception):
-			p = Period('1 monthss')
+			p = period('1 monthss')
 
 	def testTimeInterval(self):
-		p = Period('2012-07-12:2012-07-16')
+		p = period('2012-07-12:2012-07-16')
 		self.assertEqual(p.size(), 4)
-		self.assertEqual(p.unit, 'day')
-	
-	def testTimeIntervalWithDate(self):
-		p = Period( ("2012-7-12","2012-7-22") )
-		self.assertEqual(p.size(), 10)
 		self.assertEqual(p.unit, 'day')
 	
 	def testTimeIntervalError(self):
 		with self.assertRaises(Exception):
-			p = Period('2012-12-12:2012-10-16')
+			p = period('2012-12-12:2012-10-16')
 
 	def testTimeIntervalErrorWithDate(self):
 		d1 = "2012-07-12"
 		d2 = "2012-07-27" # 15 days
 		with self.assertRaises(Exception):
-			p = Period((d2,d1))
-		p = Period('2012-07-12:2012-07-22')
+			p = period((d2,d1))
+		p = period('2012-07-12:2012-07-22')
 		self.assertEqual(p.size(), 10)
 		self.assertEqual(p.unit, 'day')
-		p = Period('15 days')
+		p = period('15 days')
 		self.assertEqual(p.size(), 15)
 		self.assertEqual(p.unit, 'day')
 	
 	def test_CalendarRangePeriod(self):
-		p = Period('2002-07-12:2002-07-22')
-		cal = Calendar('calTest')
+		p = period('2002-07-12:2002-07-22')
+		cal = Calendar('Test')
 		c = CalendarRangePeriod(p, cal)
 		self.assertEqual(p.dates, c.dates)
 		self.assertEqual(c.calendar, cal)
@@ -74,7 +74,13 @@ class TestDayCount(unittest.TestCase):
 	def test_DayCount(self):
 		dc = DayCount('business/252')
 		self.assertEqual(dc, DayCount('business/252'))
-		self.assertNotEqual(dc, DayCount('actual/365 Fixed'))
+		self.assertNotEqual(dc, DayCount('actual/365'))
+		
+		self.assertEqual( ('actual/360', '30E+/360', 'actual/364', 'actual/365',
+			'30/360', 'business/252', 'actual/365L', '30E/360 ISDA',
+			'30/360 US'), DayCount.names)
+		self.assertEqual( ('quarterly', 'semi-annual', 'annual', 'daily', 
+			'monthly'), DayCount.freqs)
 	
 	def testBusiness252(self):
 		dc = DayCount('business/252')
@@ -99,39 +105,39 @@ class TestDayCount(unittest.TestCase):
 	
 	def test_Actual360_timefactor(self):
 		dc = DayCount('actual/360')
-		p = Period('2012-07-12:2012-07-16')
+		p = period('2012-07-12:2012-07-16')
 		self.assertEqual(dc.timefactor(p), 4.0/dc.daysinbase)
-		p = Period('2012-07-12:2012-07-22')
+		p = period('2012-07-12:2012-07-22')
 		self.assertEqual(dc.timefactor(p), 10.0/dc.daysinbase)
 		
 	def test_Actual360_timefreq(self):
 		dc = DayCount('actual/360')
-		p = Period('2012-07-12:2012-07-16')
+		p = period('2012-07-12:2012-07-16')
 		self.assertAlmostEqual(dc.timefreq(p, 'annual'), 4.0/dc.daysinbase)
 		self.assertAlmostEqual(dc.timefreq(p, 'semi-annual'), 2*4.0/dc.daysinbase)
 		self.assertAlmostEqual(dc.timefreq(p, 'quarterly'), 4*4.0/dc.daysinbase)
 		self.assertAlmostEqual(dc.timefreq(p, 'monthly'), 12*4.0/dc.daysinbase)
 		self.assertAlmostEqual(dc.timefreq(p, 'daily'), 4.0)
-		# p = Period('2012-07-12:2012-07-22')
+		# p = period('2012-07-12:2012-07-22')
 		# self.assertEqual(dc.timefactor(p), 10.0/360)
 		
 	def testActual365(self):
-		dc = DayCount('actual/365 Fixed')
+		dc = DayCount('actual/365')
 		self.assertEqual(dc.daysinunit('day'), 1)
 		self.assertEqual(dc.daysinbase, 365)
 		self.assertEqual(dc.daysinunit('year'), dc.daysinbase)
 		self.assertEqual(dc.unitsize('day'), dc.daysinbase)
 	
 	def test_Actual365_timefactor(self):
-		dc = DayCount('actual/365 Fixed')
-		p = Period('2012-07-12:2012-07-16')
+		dc = DayCount('actual/365')
+		p = period('2012-07-12:2012-07-16')
 		self.assertEqual(dc.timefactor(p), 4.0/dc.daysinbase)
-		p = Period('2012-07-12:2012-07-22')
+		p = period('2012-07-12:2012-07-22')
 		self.assertEqual(dc.timefactor(p), 10.0/dc.daysinbase)
 	
 	def test_Actual365_timefreq(self):
-		dc = DayCount('actual/365 Fixed')
-		p = Period('2012-07-12:2012-07-16')
+		dc = DayCount('actual/365')
+		p = period('2012-07-12:2012-07-16')
 		self.assertAlmostEqual(dc.timefreq(p, 'annual'), 4.0/dc.daysinbase)
 		self.assertAlmostEqual(dc.timefreq(p, 'semi-annual'), 2*4.0/dc.daysinbase)
 		self.assertAlmostEqual(dc.timefreq(p, 'quarterly'), 4*4.0/dc.daysinbase)
@@ -139,28 +145,28 @@ class TestDayCount(unittest.TestCase):
 		self.assertAlmostEqual(dc.timefreq(p, 'daily'), 4.0)
 	
 	def test_timefactor_FixedPeriod(self):
-		dc = DayCount('actual/365 Fixed')
-		p = Period('1 year')
+		dc = DayCount('actual/365')
+		p = period('1 year')
 		self.assertEqual(dc.timefactor(p), 1)
-		p = Period('1 half-year')
+		p = period('1 half-year')
 		self.assertEqual(dc.timefactor(p), 1.0/2)
-		p = Period('1 quarter')
+		p = period('1 quarter')
 		self.assertEqual(dc.timefactor(p), 1.0/4)
-		p = Period('1 month')
+		p = period('1 month')
 		self.assertEqual(round(dc.timefactor(p), 6), round(1.0/12, 6))
-		p = Period('1 day')
+		p = period('1 day')
 		self.assertEqual(dc.timefactor(p), 1.0/dc.daysinbase)
 		
 		dc = DayCount('business/252')
-		p = Period('1 year')
+		p = period('1 year')
 		self.assertEqual(dc.timefactor(p), 1)
-		p = Period('1 half-year')
+		p = period('1 half-year')
 		self.assertEqual(dc.timefactor(p), 1.0/2)
-		p = Period('1 quarter')
+		p = period('1 quarter')
 		self.assertEqual(dc.timefactor(p), 1.0/4)
-		p = Period('1 month')
+		p = period('1 month')
 		self.assertEqual(round(dc.timefactor(p), 6), round(1.0/12, 6))
-		p = Period('1 day')
+		p = period('1 day')
 		self.assertEqual(dc.timefactor(p), 1.0/dc.daysinbase)
 
 
@@ -182,24 +188,24 @@ class TestInterestRate(unittest.TestCase):
 	def testInterestRateDefault(self):
 		ir = InterestRate(0.1, 'annual', 'simple', 'actual/360')
 		smp = Compounding.simple
-		self.assertEqual(ir.compound(Period('1 month')), smp(0.1, 1.0/12))
+		self.assertEqual(ir.compound(period('1 month')), smp(0.1, 1.0/12))
 		self.assertEqual(ir.compound('1 month'), smp(0.1, 1.0/12))
 		self.assertEqual(ir.compound('2012-07-12:2012-07-22'), smp(0.1, 10.0/360))
-		p = Period( ("2012-7-12", "2012-7-22") )
+		p = period( ("2012-7-12", "2012-7-22") )
 		self.assertEqual(ir.compound(p), smp(0.1, 10.0/360))
 	
 	def testInterestRateDefault(self):
-		ir = InterestRate(0.1, 'annual', 'simple', 'business/252', calendar='calTest')
+		ir = InterestRate(0.1, 'annual', 'simple', 'business/252', calendar='Test')
 		smp = Compounding.simple
 		comp_val = smp(0.1, 6.0/252)
 		
-		p = Period( ("2002-7-12", "2002-7-22") )
+		p = period("2002-7-12:2002-7-22")
 		comp = ir.compound(p)
 		self.assertEqual(comp, comp_val)
 	
 	def testInterestRateFrequency(self):
 		smp = Compounding.simple
-		p = Period('1 month')
+		p = period('1 month')
 		
 		ir = InterestRate(0.1, 'monthly', 'simple', 'actual/360')
 		self.assertEqual(ir.compound(p), smp(0.1, 1.0))
@@ -212,7 +218,7 @@ class TestInterestRate(unittest.TestCase):
 	
 	def testInterestRateCompounding(self):
 		func = Compounding.compounded
-		p = Period('1 month')
+		p = period('1 month')
 		
 		ir = InterestRate(0.1, 'annual', 'compounded', 'actual/360')
 		self.assertEqual(ir.compound(p), func(0.1, 1.0/12))
@@ -222,6 +228,14 @@ class TestInterestRate(unittest.TestCase):
 		
 		ir = InterestRate(0.1, 'daily', 'compounded', 'actual/360')
 		self.assertEqual(ir.compound(p), func(0.1, 30))
+		
+	def test_ir(self):
+		"""ir function"""
+		ir_ = ir('0.06 annual simple actual/365')
+		self.assertEqual(ir_.rate, 0.06)
+		self.assertEqual(ir_.compounding, 'simple')
+		self.assertEqual(ir_.frequency, 'annual')
+		self.assertEqual(ir_.daycount, 'actual/365')
 	
 
 class TestCalendar(unittest.TestCase):
@@ -231,8 +245,8 @@ class TestCalendar(unittest.TestCase):
 			Calendar('AAA')
 		with self.assertRaises(Exception):
 			Calendar('calAAA')
-		cal = Calendar('calTest')
-		self.assertEqual(cal, Calendar('calTest'))
+		cal = Calendar('Test')
+		self.assertEqual(cal, Calendar('Test'))
 		self.assertEqual(cal.startdate.isoformat(), '2001-01-01')
 		self.assertEqual(cal.enddate.isoformat(), '2002-12-31')
 		self.assertEqual(len(cal.holidays), 2)
@@ -242,20 +256,20 @@ class TestCalendar(unittest.TestCase):
 	
 	def test_Calendar_workdays(self):
 		'calendar count of workdays'
-		cal = Calendar('calTest')
+		cal = Calendar('Test')
 		days = cal.workdays(('2002-01-01', '2002-01-02'))
 		self.assertEqual(0, days, 'Wrong business days amount')
 		self.assertEqual(cal.workdays(('2002-07-12', '2002-07-22')), 6)
 	
 	def test_Calendar_currentdays(self):
 		'calendar count of currentdays'
-		cal = Calendar('calTest')
+		cal = Calendar('Test')
 		days = cal.currentdays(('2002-01-01', '2002-01-02'))
 		self.assertEqual(1, days, 'Wrong current days amount')
 	
 	def test_Calendar_isworkday(self):
 		'calendar count of currentdays'
-		cal = Calendar('calTest')
+		cal = Calendar('Test')
 		self.assertEqual(cal.isworkday('2002-01-01'), False) # New year
 		self.assertEqual(cal.isworkday('2002-01-02'), True)  # First workday
 		self.assertEqual(cal.isworkday('2002-01-05'), False) # Saturday

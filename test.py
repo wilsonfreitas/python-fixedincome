@@ -6,6 +6,12 @@ import unittest
 from datetime import date
 from fixedincome import *
 
+
+class TestTimeUnit(unittest.TestCase):
+	def test_names(self):
+		t = tuple(sorted(('year', 'half-year', 'quarter', 'month', 'day')))
+		self.assertEqual( t, tuple(sorted(TimeUnit.names)) )
+
 class TestCompounding(unittest.TestCase):
 	def test_names(self):
 		self.assertEqual( ('compounded', 'continuous', 'simple'), Compounding.names )
@@ -80,7 +86,7 @@ class TestDayCount(unittest.TestCase):
 			'30/360', 'business/252', 'actual/365L', '30E/360 ISDA',
 			'30/360 US'), DayCount.names)
 		self.assertEqual( ('quarterly', 'semi-annual', 'annual', 'daily', 
-			'monthly'), DayCount.freqs)
+			'monthly'), Frequency.names)
 	
 	def testBusiness252(self):
 		dc = DayCount('business/252')

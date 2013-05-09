@@ -37,7 +37,7 @@ def ir(irspec):
 			compounding = tok
 		elif tok in DayCount.names:
 			daycount = tok
-		elif tok in DayCount.freqs:
+		elif tok in Frequency.names:
 			frequency = tok
 		elif tok.startswith('cal'):
 			calendar = tok.replace('cal', '')
@@ -73,8 +73,8 @@ def period(pspec):
 		p = period('2012-07-12:2012-07-16')
 		p = period('2012-07-12:2012-07-22')
 	"""
-	
-	m = re.match('^(\d+)(\.\d+)? (year|half-year|quarter|month|day)s?$', pspec)
+	w = '|'.join(TimeUnit.names)
+	m = re.match('^(\d+)(\.\d+)? (%s)s?$' % w, pspec)
 	if m:
 		istimerange = False
 	elif len(pspec.split(':')) == 2:
@@ -182,14 +182,6 @@ class DayCount(object):
 		'actual/365L': 365,
 		'business/252': 252
 	}
-	_freq_map = { # frequency to time unit mapping
-		# adjective : noun
-		'annual': 'year',
-		'semi-annual': 'half-year',
-		'quarterly': 'quarter',
-		'monthly': 'month',
-		'daily': 'day'
-	}
 	
 	def __init__(self, dc):
 		self._daycount = dc
@@ -242,10 +234,24 @@ class DayCount(object):
 		to the given frequency.
 		"""
 		tf = self.timefactor(period)
-		return tf * self.unitsize(self._freq_map[frequency])
+		return tf * self.unitsize(Frequency.units[frequency])
 
 DayCount.names = tuple(DayCount._daycounts.keys())
-DayCount.freqs = tuple(DayCount._freq_map.keys())
+
+class Frequency(object):
+	units = { # frequency to time unit mapping
+		# adjective : noun
+		'annual': 'year',
+		'semi-annual': 'half-year',
+		'quarterly': 'quarter',
+		'monthly': 'month',
+		'daily': 'day'
+	}
+
+Frequency.names = tuple(Frequency.units.keys())
+
+class TimeUnit(object):
+	names = tuple(Frequency.units.values())
 
 class Calendar(object):
 	"""docstring for Calendar"""

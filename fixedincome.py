@@ -34,11 +34,11 @@ def ir(irspec):
 		if m:
 			rate = float(m.group())
 		elif tok in Compounding.names:
-			compounding = tok
+			compounding = Compounding(tok)
 		elif tok in DayCount.names:
 			daycount = tok
 		elif tok in Frequency.names:
-			frequency = tok
+			frequency = Frequency(tok)
 		elif tok.startswith('cal'):
 			calendar = tok.replace('cal', '')
 	return InterestRate(rate, frequency, compounding, daycount, calendar)
@@ -234,7 +234,7 @@ class DayCount(object):
 		to the given frequency.
 		"""
 		tf = self.timefactor(period)
-		return tf * self.unitsize(Frequency.units[frequency])
+		return tf * self.unitsize(Frequency.units[frequency.name])
 
 DayCount.names = tuple(DayCount._daycounts.keys())
 
@@ -247,7 +247,19 @@ class Frequency(object):
 		'monthly': 'month',
 		'daily': 'day'
 	}
-
+	
+	def __init__(self, name):
+		if name not in self.names:
+			raise Exception('Invalid frequency: %s' % name)
+		self._name = name
+	
+	def __eq__(self, other):
+		return self.name == other.name
+	
+	def __get_name(self):
+		return self._name
+	name = property(__get_name)
+	
 Frequency.names = tuple(Frequency.units.keys())
 
 class TimeUnit(object):
@@ -318,22 +330,30 @@ class Calendar(object):
 
 
 class Compounding(object):
-	@staticmethod
-	def simple(r, t):
-		"""simple compounding factor"""
-		return 1 + r*t
+	_funcs = {
+		'simple': lambda r,t: 1 + r*t,
+		'compounded': lambda r,t: (1 + r)**t,
+		'continuous': lambda r,t: exp(r*t)
+	}
+	def __init__(self, name):
+		if name not in self.names:
+			raise Exception('Invalid compounding: %s' % name)
+		self._name = name
 	
-	@staticmethod
-	def compounded(r, t):
-		"""compounded compounding factor"""
-		return (1 + r)**t
+	def __call__(self, r, t):
+		return self._funcs[self.name](r, t)
 	
-	@staticmethod
-	def continuous(r, t):
-		"""continuous compounding factor"""
-		return exp(r*t)
-
-Compounding.names = tuple([i for i in dir(Compounding) if not i.startswith('_')])
+	def __eq__(self, other):
+		return self.name == other.name
+	
+	def __get_name(self):
+		return self._name
+	name = property(__get_name)
+	
+# TODO: This code is a malign hack. I might use a metaclass here.
+Compounding.names = tuple([i for i in Compounding._funcs.keys()])
+for k,v in Compounding._funcs.iteritems():
+	setattr(Compounding, k, staticmethod(v))
 
 
 class InterestRate(object):
@@ -347,17 +367,14 @@ class InterestRate(object):
 	calendar and that calendar must be used to discount the cashflows.
 	"""
 	# TODO: this class must receive the instance of daycount, compounding, frequency, and calendar. It shouldn't receive strings anymore.
+	# TODO: I realized that an InterestRate declared 'actual/365' with a calendar, the period count days accordingly the calendar, it ignores the actual/365 setup. It should only consider the calendar for business/*** DayCounts.
 	def __init__(self, rate, frequency, compounding, daycount, calendar=None):
 		self.rate = rate
 		self.frequency = frequency
 		self.daycount = daycount
 		self.compounding = compounding
-		self._compoundingfunc = getattr(Compounding, self.compounding)
-		self.daycount = DayCount(daycount)
-		if calendar:
-			self.calendar = Calendar(calendar)
-		else:
-			self.calendar = None
+		self.daycount = daycount
+		self.calendar = calendar
 	
 	def discount(self, period):
 		"""Return the discount factor"""
@@ -369,7 +386,7 @@ class InterestRate(object):
 			period = CalendarRangePeriod(period, self.calendar)
 		
 		t = self.daycount.timefreq(period, self.frequency)
-		return self._compoundingfunc(self.rate, t)
+		return self.compounding(self.rate, t)
 	
 	# write conversion functions: given other settings generate a different rate
 

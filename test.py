@@ -14,16 +14,22 @@ class TestTimeUnit(unittest.TestCase):
 		self.assertEqual( t, tuple(sorted(TimeUnit.names)) )
 
 class TestFrequency(unittest.TestCase):
+	def test_Frequency(self):
+		"""Frequency instanciation"""
+		f = Frequency('annual')
+		self.assertEqual(f.name, 'annual')
+		self.assertEqual(f, Frequency('annual'))
+		
+		with self.assertRaises(AttributeError):
+			f.name = 'annu'
+		with self.assertRaises(Exception):
+			Frequency('annu')
+		
+	
 	def test_names(self):
 		u = ('annual', 'daily', 'monthly', 'quarterly', 'semi-annual')
 		t = tuple(sorted(u))
 		self.assertEqual( t, tuple(sorted(Frequency.names)) )
-
-class TestCompounding(unittest.TestCase):
-	def test_names(self):
-		u = ('compounded', 'continuous', 'simple')
-		t = tuple(sorted(u))
-		self.assertEqual( t, tuple(sorted(Compounding.names)) )
 
 class TestPeriod(unittest.TestCase):
 	def testFixedPeriod(self):
@@ -185,6 +191,22 @@ class TestDayCount(unittest.TestCase):
 
 
 class TestCompounding(unittest.TestCase):
+	def test_names(self):
+		u = ('compounded', 'continuous', 'simple')
+		t = tuple(sorted(u))
+		self.assertEqual( t, tuple(sorted(Compounding.names)) )
+	
+	def test_Compounding(self):
+		'Compounding instanciation'
+		comp = Compounding('simple')
+		self.assertEqual(comp.name, 'simple')
+		
+		with self.assertRaises(Exception):
+			Compounding('blah')
+		
+		with self.assertRaises(AttributeError):
+			comp.name = 'new'
+
 	def testSimpleCompounding(self):
 		smp = Compounding.simple
 		self.assertEqual(1 + 0.5*2, smp(0.5, 2))
@@ -199,17 +221,37 @@ class TestCompounding(unittest.TestCase):
 	
 
 class TestInterestRate(unittest.TestCase):
-	def testInterestRateDefault(self):
-		ir = InterestRate(0.1, 'annual', 'simple', 'actual/360')
+	def test_InterestRate(self):
+		'InterestRate instanciation'
+		ir = InterestRate(0.1, Frequency('annual'), Compounding('simple'), 
+			DayCount('actual/360'))
+		self.assertEqual(ir.rate, 0.1)
+		self.assertEqual(ir.frequency, Frequency('annual'))
+		self.assertEqual(ir.compounding, Compounding('simple'))
+		self.assertEqual(ir.daycount, DayCount('actual/360'))
+		self.assertEqual(ir.calendar, None)
+		
+		ir = InterestRate(0.1, Frequency('annual'), Compounding('simple'), 
+			DayCount('business/252'), Calendar('Test'))
+		self.assertEqual(ir.rate, 0.1)
+		self.assertEqual(ir.frequency, Frequency('annual'))
+		self.assertEqual(ir.compounding, Compounding('simple'))
+		self.assertEqual(ir.daycount, DayCount('business/252'))
+		self.assertEqual(ir.calendar, Calendar('Test'))
+	
+	def test_InterestRate_compound(self):
+		'InterestRate compound'
+		ir = InterestRate(0.1, Frequency('annual'), Compounding('simple'), 
+			DayCount('actual/360'))
 		smp = Compounding.simple
 		self.assertEqual(ir.compound(period('1 month')), smp(0.1, 1.0/12))
-		self.assertEqual(ir.compound('1 month'), smp(0.1, 1.0/12))
-		self.assertEqual(ir.compound('2012-07-12:2012-07-22'), smp(0.1, 10.0/360))
-		p = period( ("2012-7-12", "2012-7-22") )
+		p = period("2012-7-12:2012-7-22")
 		self.assertEqual(ir.compound(p), smp(0.1, 10.0/360))
 	
-	def testInterestRateDefault(self):
-		ir = InterestRate(0.1, 'annual', 'simple', 'business/252', calendar='Test')
+	def test_InterestRate_simple_rate(self):
+		'InterestRate simple rate'
+		comp = Compounding("simple")
+		ir = InterestRate(0.1, 'annual', comp, 'business/252', calendar='Test')
 		smp = Compounding.simple
 		comp_val = smp(0.1, 6.0/252)
 		
@@ -217,38 +259,41 @@ class TestInterestRate(unittest.TestCase):
 		comp = ir.compound(p)
 		self.assertEqual(comp, comp_val)
 	
-	def testInterestRateFrequency(self):
-		smp = Compounding.simple
-		p = period('1 month')
-		
-		ir = InterestRate(0.1, 'monthly', 'simple', 'actual/360')
-		self.assertEqual(ir.compound(p), smp(0.1, 1.0))
-		
-		ir = InterestRate(0.1, 'semi-annual', 'simple', 'actual/360')
-		self.assertEqual(ir.compound(p), smp(0.1, 1.0/6))
-		
-		ir = InterestRate(0.1, 'daily', 'simple', 'actual/360')
-		self.assertEqual(ir.compound(p), smp(0.1, 30))
-	
-	def testInterestRateCompounding(self):
+	def test_InterestRate_compounding_rate(self):
+		'InterestRate compound rate'
 		func = Compounding.compounded
+		comp = Compounding('compounded')
 		p = period('1 month')
 		
-		ir = InterestRate(0.1, 'annual', 'compounded', 'actual/360')
+		ir = InterestRate(0.1, 'annual', comp, 'actual/360')
 		self.assertEqual(ir.compound(p), func(0.1, 1.0/12))
 		
-		ir = InterestRate(0.1, 'semi-annual', 'compounded', 'actual/360')
+		ir = InterestRate(0.1, 'semi-annual', comp, 'actual/360')
 		self.assertEqual(ir.compound(p), func(0.1, 1.0/6))
 		
-		ir = InterestRate(0.1, 'daily', 'compounded', 'actual/360')
+		ir = InterestRate(0.1, 'daily', comp, 'actual/360')
 		self.assertEqual(ir.compound(p), func(0.1, 30))
 		
+	def testInterestRateFrequency(self):
+		smp = Compounding.simple
+		comp = Compounding("simple")
+		p = period('1 month')
+		
+		ir = InterestRate(0.1, 'monthly', comp, 'actual/360')
+		self.assertEqual(ir.compound(p), smp(0.1, 1.0))
+		
+		ir = InterestRate(0.1, 'semi-annual', comp, 'actual/360')
+		self.assertEqual(ir.compound(p), smp(0.1, 1.0/6))
+		
+		ir = InterestRate(0.1, 'daily', comp, 'actual/360')
+		self.assertEqual(ir.compound(p), smp(0.1, 30))
+	
 	def test_ir(self):
 		"""ir function"""
 		ir_ = ir('0.06 annual simple actual/365')
 		self.assertEqual(ir_.rate, 0.06)
-		self.assertEqual(ir_.compounding, 'simple')
-		self.assertEqual(ir_.frequency, 'annual')
+		self.assertEqual(ir_.compounding, Compounding('simple'))
+		self.assertEqual(ir_.frequency, Frequency('annual'))
 		self.assertEqual(ir_.daycount, DayCount('actual/365'))
 	
 

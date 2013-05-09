@@ -9,18 +9,21 @@ from fixedincome import *
 
 class TestTimeUnit(unittest.TestCase):
 	def test_names(self):
-		t = tuple(sorted(('year', 'half-year', 'quarter', 'month', 'day')))
+		u = ('year', 'half-year', 'quarter', 'month', 'day')
+		t = tuple(sorted(u))
 		self.assertEqual( t, tuple(sorted(TimeUnit.names)) )
 
 class TestFrequency(unittest.TestCase):
 	def test_names(self):
-		t = tuple(sorted(('annual', 'daily', 'monthly', 'quarterly', 'semi-annual')))
+		u = ('annual', 'daily', 'monthly', 'quarterly', 'semi-annual')
+		t = tuple(sorted(u))
 		self.assertEqual( t, tuple(sorted(Frequency.names)) )
 
 class TestCompounding(unittest.TestCase):
 	def test_names(self):
-		self.assertEqual( ('compounded', 'continuous', 'simple'), Compounding.names )
-	
+		u = ('compounded', 'continuous', 'simple')
+		t = tuple(sorted(u))
+		self.assertEqual( t, tuple(sorted(Compounding.names)) )
 
 class TestPeriod(unittest.TestCase):
 	def testFixedPeriod(self):

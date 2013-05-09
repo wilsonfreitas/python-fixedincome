@@ -234,6 +234,7 @@ class DayCount(object):
 		to the given frequency.
 		"""
 		tf = self.timefactor(period)
+		# TODO this must be changed, there is no need of doing that. Frequency class should hava a method that returns a unit for a given frequency. Since you have a Frequency instance you should only return the corresponding unit (TimeUnit).
 		return tf * self.unitsize(Frequency.units[frequency.name])
 
 DayCount.names = tuple(DayCount._daycounts.keys())
@@ -388,6 +389,6 @@ class InterestRate(object):
 		t = self.daycount.timefreq(period, self.frequency)
 		return self.compounding(self.rate, t)
 	
-	# write conversion functions: given other settings generate a different rate
+	# TODO write conversion functions: given other settings generate a different rate
 
 

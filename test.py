@@ -12,6 +12,11 @@ class TestTimeUnit(unittest.TestCase):
 		t = tuple(sorted(('year', 'half-year', 'quarter', 'month', 'day')))
 		self.assertEqual( t, tuple(sorted(TimeUnit.names)) )
 
+class TestFrequency(unittest.TestCase):
+	def test_names(self):
+		t = tuple(sorted(('annual', 'daily', 'monthly', 'quarterly', 'semi-annual')))
+		self.assertEqual( t, tuple(sorted(Frequency.names)) )
+
 class TestCompounding(unittest.TestCase):
 	def test_names(self):
 		self.assertEqual( ('compounded', 'continuous', 'simple'), Compounding.names )

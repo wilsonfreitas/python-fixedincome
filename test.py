@@ -133,11 +133,11 @@ class TestDayCount(unittest.TestCase):
 	def test_Actual360_timefreq(self):
 		dc = DayCount('actual/360')
 		p = period('2012-07-12:2012-07-16')
-		self.assertAlmostEqual(dc.timefreq(p, 'annual'), 4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'semi-annual'), 2*4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'quarterly'), 4*4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'monthly'), 12*4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'daily'), 4.0)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('annual')), 4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('semi-annual')), 2*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('quarterly')), 4*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('monthly')), 12*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('daily')), 4.0)
 		# p = period('2012-07-12:2012-07-22')
 		# self.assertEqual(dc.timefactor(p), 10.0/360)
 		
@@ -158,11 +158,11 @@ class TestDayCount(unittest.TestCase):
 	def test_Actual365_timefreq(self):
 		dc = DayCount('actual/365')
 		p = period('2012-07-12:2012-07-16')
-		self.assertAlmostEqual(dc.timefreq(p, 'annual'), 4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'semi-annual'), 2*4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'quarterly'), 4*4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'monthly'), 12*4.0/dc.daysinbase)
-		self.assertAlmostEqual(dc.timefreq(p, 'daily'), 4.0)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('annual')), 4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('semi-annual')), 2*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('quarterly')), 4*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('monthly')), 12*4.0/dc.daysinbase)
+		self.assertAlmostEqual(dc.timefreq(p, Frequency('daily')), 4.0)
 	
 	def test_timefactor_FixedPeriod(self):
 		dc = DayCount('actual/365')
@@ -251,7 +251,8 @@ class TestInterestRate(unittest.TestCase):
 	def test_InterestRate_simple_rate(self):
 		'InterestRate simple rate'
 		comp = Compounding("simple")
-		ir = InterestRate(0.1, 'annual', comp, 'business/252', calendar='Test')
+		ir = InterestRate(0.1, Frequency('annual'), comp, 
+			DayCount('business/252'), Calendar('Test'))
 		smp = Compounding.simple
 		comp_val = smp(0.1, 6.0/252)
 		
@@ -264,28 +265,30 @@ class TestInterestRate(unittest.TestCase):
 		func = Compounding.compounded
 		comp = Compounding('compounded')
 		p = period('1 month')
+		dc = DayCount('actual/360')
 		
-		ir = InterestRate(0.1, 'annual', comp, 'actual/360')
+		ir = InterestRate(0.1, Frequency('annual'), comp, dc)
 		self.assertEqual(ir.compound(p), func(0.1, 1.0/12))
 		
-		ir = InterestRate(0.1, 'semi-annual', comp, 'actual/360')
+		ir = InterestRate(0.1, Frequency('semi-annual'), comp, dc)
 		self.assertEqual(ir.compound(p), func(0.1, 1.0/6))
 		
-		ir = InterestRate(0.1, 'daily', comp, 'actual/360')
+		ir = InterestRate(0.1, Frequency('daily'), comp, dc)
 		self.assertEqual(ir.compound(p), func(0.1, 30))
 		
 	def testInterestRateFrequency(self):
 		smp = Compounding.simple
 		comp = Compounding("simple")
 		p = period('1 month')
+		dc = DayCount('actual/360')
 		
-		ir = InterestRate(0.1, 'monthly', comp, 'actual/360')
+		ir = InterestRate(0.1, Frequency('monthly'), comp, dc)
 		self.assertEqual(ir.compound(p), smp(0.1, 1.0))
 		
-		ir = InterestRate(0.1, 'semi-annual', comp, 'actual/360')
+		ir = InterestRate(0.1, Frequency('semi-annual'), comp, dc)
 		self.assertEqual(ir.compound(p), smp(0.1, 1.0/6))
 		
-		ir = InterestRate(0.1, 'daily', comp, 'actual/360')
+		ir = InterestRate(0.1, Frequency('daily'), comp, dc)
 		self.assertEqual(ir.compound(p), smp(0.1, 30))
 	
 	def test_ir(self):

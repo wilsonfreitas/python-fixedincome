@@ -36,11 +36,11 @@ def ir(irspec):
 		elif tok in Compounding.names:
 			compounding = Compounding(tok)
 		elif tok in DayCount.names:
-			daycount = tok
+			daycount = DayCount(tok)
 		elif tok in Frequency.names:
 			frequency = Frequency(tok)
 		elif tok.startswith('cal'):
-			calendar = tok.replace('cal', '')
+			calendar = Calendar(tok.replace('cal', ''))
 	return InterestRate(rate, frequency, compounding, daycount, calendar)
 
 def compound(ir, period):

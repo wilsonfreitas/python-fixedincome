@@ -298,6 +298,12 @@ class TestInterestRate(unittest.TestCase):
 		self.assertEqual(ir_.compounding, Compounding('simple'))
 		self.assertEqual(ir_.frequency, Frequency('annual'))
 		self.assertEqual(ir_.daycount, DayCount('actual/365'))
+		ir_ = ir('0.01 semi-annual compounded business/252 calTest')
+		self.assertEqual(ir_.rate, 0.01)
+		self.assertEqual(ir_.compounding, Compounding('compounded'))
+		self.assertEqual(ir_.frequency, Frequency('semi-annual'))
+		self.assertEqual(ir_.daycount, DayCount('business/252'))
+		self.assertEqual(ir_.calendar, Calendar('Test'))
 	
 
 class TestCalendar(unittest.TestCase):

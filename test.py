@@ -249,7 +249,7 @@ class TestInterestRate(unittest.TestCase):
 		self.assertEqual(ir_.rate, 0.06)
 		self.assertEqual(ir_.compounding, 'simple')
 		self.assertEqual(ir_.frequency, 'annual')
-		self.assertEqual(ir_.daycount, 'actual/365')
+		self.assertEqual(ir_.daycount, DayCount('actual/365'))
 	
 
 class TestCalendar(unittest.TestCase):

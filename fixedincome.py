@@ -353,7 +353,7 @@ class InterestRate(object):
 		self.daycount = daycount
 		self.compounding = compounding
 		self._compoundingfunc = getattr(Compounding, self.compounding)
-		self._daycount = DayCount(self.daycount)
+		self.daycount = DayCount(daycount)
 		if calendar:
 			self.calendar = Calendar(calendar)
 		else:
@@ -368,7 +368,7 @@ class InterestRate(object):
 		if self.calendar:
 			period = CalendarRangePeriod(period, self.calendar)
 		
-		t = self._daycount.timefreq(period, self.frequency)
+		t = self.daycount.timefreq(period, self.frequency)
 		return self._compoundingfunc(self.rate, t)
 	
 	# write conversion functions: given other settings generate a different rate

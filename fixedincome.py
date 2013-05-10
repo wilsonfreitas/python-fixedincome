@@ -81,8 +81,6 @@ def period(pspec):
 	if istimerange:
 		dates = (datetime.strptime(start, '%Y-%m-%d').date(), 
 			datetime.strptime(end, '%Y-%m-%d').date())
-		if dates[0] > dates[1]:
-			raise Exception('Invalid period specification: start date must be greater than end date.')
 		return DateRangePeriod(dates, 'day')
 	else:
 		g = m.groups()
@@ -141,6 +139,9 @@ class DateRangePeriod(GenericPeriod):
 	"""
 	def __init__(self, dates, unit='day'):
 		super(DateRangePeriod, self).__init__(unit)
+		if dates[0] > dates[1]:
+			raise Exception('Invalid period: the starting date must be greater \
+				than the ending date.')
 		self.dates = dates
 		
 	def size(self):

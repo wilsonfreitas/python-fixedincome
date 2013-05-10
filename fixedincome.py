@@ -184,6 +184,9 @@ class DayCount(object):
 	}
 	
 	def __init__(self, dc):
+		if dc not in self.names:
+			raise Exception('Invalid day count: %s' % dc)
+		self._name = dc
 		self._daycount = dc
 		self._daysinbase = self._daycounts[dc]
 		self._unitsize = { # frequency multiplier
@@ -200,6 +203,10 @@ class DayCount(object):
 		"""
 		return self._daysinbase
 	daysinbase = property(__getdaysinbase)
+	
+	def __get_name(self):
+		return self._name
+	name = property(__get_name)
 	
 	def __eq__(self, other):
 		return self._daycount == other._daycount
@@ -234,13 +241,12 @@ class DayCount(object):
 		to the given frequency.
 		"""
 		tf = self.timefactor(period)
-		# TODO this must be changed, there is no need of doing that. Frequency class should hava a method that returns a unit for a given frequency. Since you have a Frequency instance you should only return the corresponding unit (TimeUnit).
-		return tf * self.unitsize(Frequency.units[frequency.name])
+		return tf * self.unitsize(frequency.unit())
 
 DayCount.names = tuple(DayCount._daycounts.keys())
 
 class Frequency(object):
-	units = { # frequency to time unit mapping
+	_units = { # frequency to time unit mapping
 		# adjective : noun
 		'annual': 'year',
 		'semi-annual': 'half-year',
@@ -261,10 +267,42 @@ class Frequency(object):
 		return self._name
 	name = property(__get_name)
 	
-Frequency.names = tuple(Frequency.units.keys())
+	def unit(self):
+		return self._units[self.name]
+	
+Frequency.names = tuple(Frequency._units.keys())
+
 
 class TimeUnit(object):
-	names = tuple(Frequency.units.values())
+	names = tuple(Frequency._units.values())
+
+
+class Compounding(object):
+	_funcs = {
+		'simple': lambda r,t: 1 + r*t,
+		'compounded': lambda r,t: (1 + r)**t,
+		'continuous': lambda r,t: exp(r*t)
+	}
+	def __init__(self, name):
+		if name not in self.names:
+			raise Exception('Invalid compounding: %s' % name)
+		self._name = name
+	
+	def __call__(self, r, t):
+		return self._funcs[self.name](r, t)
+	
+	def __eq__(self, other):
+		return self.name == other.name
+	
+	def __get_name(self):
+		return self._name
+	name = property(__get_name)
+	
+# TODO: This code is a malign hack. I might use a metaclass here.
+Compounding.names = tuple([i for i in Compounding._funcs.keys()])
+for k,v in Compounding._funcs.iteritems():
+	setattr(Compounding, k, staticmethod(v))
+
 
 class Calendar(object):
 	"""docstring for Calendar"""
@@ -330,33 +368,6 @@ class Calendar(object):
 		return not self._index[dt][2]
 
 
-class Compounding(object):
-	_funcs = {
-		'simple': lambda r,t: 1 + r*t,
-		'compounded': lambda r,t: (1 + r)**t,
-		'continuous': lambda r,t: exp(r*t)
-	}
-	def __init__(self, name):
-		if name not in self.names:
-			raise Exception('Invalid compounding: %s' % name)
-		self._name = name
-	
-	def __call__(self, r, t):
-		return self._funcs[self.name](r, t)
-	
-	def __eq__(self, other):
-		return self.name == other.name
-	
-	def __get_name(self):
-		return self._name
-	name = property(__get_name)
-	
-# TODO: This code is a malign hack. I might use a metaclass here.
-Compounding.names = tuple([i for i in Compounding._funcs.keys()])
-for k,v in Compounding._funcs.iteritems():
-	setattr(Compounding, k, staticmethod(v))
-
-
 class InterestRate(object):
 	"""
 	InterestRate class
@@ -367,8 +378,8 @@ class InterestRate(object):
 	market, we are likely to handle the situation where interest rate has its own
 	calendar and that calendar must be used to discount the cashflows.
 	"""
-	# TODO: this class must receive the instance of daycount, compounding, frequency, and calendar. It shouldn't receive strings anymore.
 	# TODO: I realized that an InterestRate declared 'actual/365' with a calendar, the period count days accordingly the calendar, it ignores the actual/365 setup. It should only consider the calendar for business/*** DayCounts.
+	# TODO write conversion functions: given other settings generate a different rate
 	def __init__(self, rate, frequency, compounding, daycount, calendar=None):
 		self.rate = rate
 		self.frequency = frequency
@@ -389,6 +400,5 @@ class InterestRate(object):
 		t = self.daycount.timefreq(period, self.frequency)
 		return self.compounding(self.rate, t)
 	
-	# TODO write conversion functions: given other settings generate a different rate
 
 

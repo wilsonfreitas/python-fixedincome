@@ -308,6 +308,15 @@ class TestInterestRate(unittest.TestCase):
 		comp = ir.compound(p)
 		self.assertEqual(comp, comp_val)
 	
+	def test_InterestRate_simple_rate_2(self):
+		'InterestRate with DayCount different from business defining Calendar'
+		comp = Compounding("simple")
+		cal = Calendar('Test')
+		freq = Frequency('annual')
+		dc = DayCount('actual/365')
+		with self.assertRaises(Exception):
+			InterestRate(0.1, freq, comp, dc, cal)
+	
 	def test_InterestRate_compounding_rate(self):
 		'InterestRate compound rate'
 		func = Compounding.compounded

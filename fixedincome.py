@@ -305,7 +305,7 @@ for k,v in Compounding._funcs.iteritems():
 
 
 class Calendar(object):
-	"""docstring for Calendar"""
+	# TODO create calendar setup, to consider or not the weekends or define another weekdays as non-business days.
 	def __init__(self, cal):
 		fname = cal + '.cal'
 		if not os.path.exists(fname):
@@ -378,7 +378,6 @@ class InterestRate(object):
 	market, we are likely to handle the situation where interest rate has its own
 	calendar and that calendar must be used to discount the cashflows.
 	"""
-	# TODO: I realized that an InterestRate declared 'actual/365' with a calendar, the period count days accordingly the calendar, it ignores the actual/365 setup. It should only consider the calendar for business/*** DayCounts.
 	# TODO write conversion functions: given other settings generate a different rate
 	def __init__(self, rate, frequency, compounding, daycount, calendar=None):
 		self.rate = rate
@@ -387,6 +386,9 @@ class InterestRate(object):
 		self.compounding = compounding
 		self.daycount = daycount
 		self.calendar = calendar
+		if self.calendar and not self.daycount.name.startswith('business'):
+			raise Exception("%s DayCount cannot accept calendar" % \
+				self.daycount.name)
 	
 	def discount(self, period):
 		"""Return the discount factor"""

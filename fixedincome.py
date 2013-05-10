@@ -4,11 +4,6 @@ import os
 from datetime import datetime, date, timedelta
 from math import exp
 
-
-# rate = '6%% annual simple (actual/365 Fixed)'
-# rate = '0.09 annual compounded business/252 calANBIMA'
-# rate = '0.06 annual continuous 30/360'
-
 def ir(irspec):
 	"""
 	Return a InterestRate object for a given interest rate specification.

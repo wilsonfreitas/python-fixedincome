@@ -209,7 +209,7 @@ class DayCount(object):
 	
 	def daysinunit(self, unit):
 		"""
-		timeunit method returns the amount of days in base, for a given time 
+		daysinunit method returns the amount of days in base, for a given time 
 		unit (year, month, day, ...). For example, the business/252 day count 
 		rule has 252 days in base, so if you have a period of time with a time
 		unit of month then you use 21 days for each month.

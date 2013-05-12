@@ -301,16 +301,10 @@ for k,v in Compounding._funcs.iteritems():
 
 
 class Calendar(object):
-	# TODO create calendar setup, to consider or not the weekends or define another weekdays as non-business days.
+	_weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
+		 'Saturday', 'Sunday')
 	def __init__(self, cal):
-		fname = cal + '.cal'
-		if not os.path.exists(fname):
-			raise Exception('Invalid calendar specification: file not found')
-		self._cal_spec = cal
-		f = open(fname)
-		self._holidays = [datetime.strptime(dt.strip(), '%Y-%m-%d').date() \
-			for dt in f if not dt.strip() is '']
-		f.close()
+		self._read_cal(cal)
 		self._startdate = date(self._holidays[0].year, 1, 1)
 		self._enddate = date(self._holidays[-1].year, 12, 31)
 		
@@ -319,7 +313,8 @@ class Calendar(object):
 		dt = self._startdate
 		w = c = 1
 		while dt <= self._enddate:
-			is_hol = dt in self._holidays or dt.weekday() in (5, 6)
+			is_hol = dt in self._holidays or dt.weekday() in \
+				self._nonwork_weekdays
 			self._index[dt] = (w, c, is_hol)
 			c += 1
 			if not is_hol:
@@ -347,6 +342,26 @@ class Calendar(object):
 			self.enddate == other.enddate and \
 			self._cal_spec == other._cal_spec
 	
+	def _read_cal(self, cal):
+		fname = cal + '.cal'
+		if not os.path.exists(fname):
+			raise Exception('Invalid calendar specification: file not found')
+		self._cal_spec = cal
+		fcal = open(fname)
+		w = '|'.join(self._weekdays)
+		self._holidays = []
+		self._nonwork_weekdays = []
+		for cal_reg in fcal:
+			cal_reg = cal_reg.strip()
+			if cal_reg is '': continue
+			m = re.match('^%s$' % w, cal_reg)
+			if m:
+				self._nonwork_weekdays.append(self._weekdays.index(cal_reg))
+			else:
+				dt = datetime.strptime(cal_reg, '%Y-%m-%d').date()
+				self._holidays.append(dt)
+		fcal.close()
+	
 	def workdays(self, dates):
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
@@ -357,7 +372,7 @@ class Calendar(object):
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
-		return self._index[d2][1] - self._index[d1][1]
+		return (d2 - d1).days
 	
 	def isworkday(self, dt):
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()

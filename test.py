@@ -8,6 +8,11 @@ from fixedincome import *
 
 
 class TestPeriod(unittest.TestCase):
+	def test_GenericPeriod(self):
+		p = GenericPeriod('day')
+		with self.assertRaises(Exception):
+			p.size()
+	
 	def test_Period__str__(self):
 		p = period('1 month')
 		self.assertEqual(str(p), '1 month')

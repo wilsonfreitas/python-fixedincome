@@ -101,6 +101,9 @@ class GenericPeriod(object):
 		raise NotImplementedError('The method numberof is not implemented for this \
 			class. User FixedTimePeriod or DateRangePeriod instead.')
 	
+	def __str__(self):
+		return '%f %s' % ( self.size(), self.unit )
+
 
 class FixedTimePeriod(GenericPeriod):
 	"""

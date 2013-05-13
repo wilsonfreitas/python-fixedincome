@@ -8,6 +8,10 @@ from fixedincome import *
 
 
 class TestPeriod(unittest.TestCase):
+	def test_Period__str__(self):
+		p = period('1 month')
+		self.assertEqual(str(p), '1 month')
+	
 	def test_FixedTimePeriod(self):
 		'FixedTimePeriod creation'
 		p = period('1 month')

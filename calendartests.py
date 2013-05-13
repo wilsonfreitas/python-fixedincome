@@ -12,18 +12,12 @@ def weekendcount(e):
 	return _weekendcount
 
 def weekendcount_sun(m):
-	if m == 6:
-		return 2
-	else:
-		return 1
+	return int(m == 6)*2 or 1
 
 def weekendcount_sat(m):
-	if m >= 1:
-		return 2
-	else:
-		return 1
+	return int(m >= 1)*2 or 1
 
-workdays_count = {
+non_workdays_count = {
 	0: weekendcount(5),
 	1: weekendcount(4),
 	2: weekendcount(3),
@@ -37,15 +31,12 @@ def workdays(dates):
 	d1, d2 = dates
 	d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 	d2 = datetime.strptime(d2, '%Y-%m-%d').date()
-	d = (d2 - d1).days
-	weeks = d/7
-	mdays = d % 7
-	wd = workdays_count[d1.weekday()](mdays)
-	wdays = d - weeks*2 - wd
-	if wdays < 0:
-		return 0
-	else:
-		return wdays
+	cdays = (d2 - d1).days # current days between 2 dates
+	weeks = d/7 # weeks
+	rdays = d%7 # remaining days
+	# computing the amount of non-working days to subtract
+	wdays = d - non_workdays_count[d1.weekday()](rdays) + weeks*2
+	return max(0, wdays)
 
 weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday',
 	'sunday']

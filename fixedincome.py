@@ -192,6 +192,43 @@ class DayCount(object):
 			'month': 12,
 			'day': self._daysinbase
 		}
+		self._unit_convert = {
+			'year': {
+				'day': self._daysinbase,
+				'month': 12,
+				'quarter': 4,
+				'half-year': 2,
+				'year': 1
+			},
+			'half-year': {
+				'day': self._daysinbase/2.0,
+				'month': 6,
+				'quarter': 2,
+				'half-year': 1,
+				'year': 0.5
+			},
+			'quarter': {
+				'day': self._daysinbase/4.0,
+				'month': 3,
+				'quarter': 1,
+				'half-year': 0.5,
+				'year': 1/4.0
+			},
+			'month': {
+				'day': self._daysinbase/12.0,
+				'month': 1,
+				'quarter': 3,
+				'half-year': 6,
+				'year': 12
+			},
+			'day': {
+				'day': 1,
+				'month': 12.0/self._daysinbase,
+				'quarter': 4.0/self._daysinbase,
+				'half-year': 2.0/self._daysinbase,
+				'year': 1.0/self._daysinbase
+			}
+		}
 	
 	def __getdaysinbase(self):
 		"""
@@ -206,6 +243,42 @@ class DayCount(object):
 	
 	def __eq__(self, other):
 		return self._daycount == other._daycount
+	
+	def in_unit(self, period, unit):
+		'''
+		Returns the size of the period converted to the given unit.
+		'''
+		return period.size()*self._unit_convert[period.unit][unit]
+	
+	def day(self, period):
+		'''
+		Returns the size of the period converted to the given unit.
+		'''
+		return period.size()*self._unit_convert[period.unit]['day']
+	
+	def month(self, period):
+		'''
+		Returns the size of the period converted to the given unit.
+		'''
+		return period.size()*self._unit_convert[period.unit]['month']
+	
+	def quarter(self, period):
+		'''
+		Returns the size of the period converted to the given unit.
+		'''
+		return period.size()*self._unit_convert[period.unit]['quarter']
+	
+	def half_year(self, period):
+		'''
+		Returns the size of the period converted to the given unit.
+		'''
+		return period.size()*self._unit_convert[period.unit]['half-year']
+	
+	def year(self, period):
+		'''
+		Returns the size of the period converted to the given unit.
+		'''
+		return period.size()*self._unit_convert[period.unit]['year']
 	
 	def daysinunit(self, unit):
 		"""

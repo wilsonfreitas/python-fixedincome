@@ -1,6 +1,19 @@
 
 from datetime import datetime, date, timedelta
 
+
+def dateindex(y,m,d):
+	'''
+	Simply speaking I can say that this function indexes a date.
+	After indexing a date we can compute the total number of days between two
+	dates by taking the difference between the two dates:
+	number_of_days = dateindex(y2,m2,d2) - dateindex(y1,m1,d1)
+	'''
+	m = (m + 9) % 12
+	y = y - m/10
+	return 365*y + y/4 - y/100 + y/400 + (m*306 + 5)/10 + ( d - 1 )
+
+
 def weekendcount(e):
 	def _weekendcount(m):
 		if m == e:

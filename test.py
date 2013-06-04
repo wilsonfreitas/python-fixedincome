@@ -15,7 +15,11 @@ class TestPeriod(unittest.TestCase):
 	
 	def test_Period__str__(self):
 		p = period('1 month')
-		self.assertEqual(str(p), '1 month')
+		self.assertEqual(str(p), '1.0 month')
+		p = period('1.5 month')
+		self.assertEqual(str(p), '1.5 months')
+		p = period('1.25 month')
+		self.assertEqual(str(p), '1.2 months')
 	
 	def test_FixedTimePeriod(self):
 		'FixedTimePeriod creation'

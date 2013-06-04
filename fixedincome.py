@@ -102,7 +102,7 @@ class GenericPeriod(object):
 			class. User FixedTimePeriod or DateRangePeriod instead.')
 	
 	def __str__(self):
-		return '%f %s' % ( self.size(), self.unit )
+		return '%.1f %s%s' % ( self.size(), self.unit, ('','s')[self.size()>1] )
 
 
 class FixedTimePeriod(GenericPeriod):
@@ -421,7 +421,7 @@ class Calendar(object):
 	def _read_cal(self, cal):
 		fname = cal + '.cal'
 		if not os.path.exists(fname):
-			raise Exception('Invalid calendar specification: file not found')
+			raise Exception('Invalid calendar specification: file not found (%s)' % fname)
 		self._cal_spec = cal
 		fcal = open(fname)
 		w = '|'.join(self._weekdays)

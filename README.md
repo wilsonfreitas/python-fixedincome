@@ -1,5 +1,5 @@
 **python-fixedincome** is a small module focused on interest rate calculations.
-It promotes an easy to use approach to set and handle the *interest rate* and its several attributes:
+It promotes an easy to use approach to set and handle the *interest rate* and its attributes:
 
 * compounding factors
 * day count rules

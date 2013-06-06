@@ -45,10 +45,10 @@ def workdays(dates):
 	d1 = datetime.strptime(d1, '%Y-%m-%d').date()
 	d2 = datetime.strptime(d2, '%Y-%m-%d').date()
 	cdays = (d2 - d1).days # current days between 2 dates
-	weeks = d/7 # weeks
-	rdays = d%7 # remaining days
+	weeks = cdays/7 # weeks
+	rdays = cdays%7 # remaining days
 	# computing the amount of non-working days to subtract
-	wdays = d - non_workdays_count[d1.weekday()](rdays) + weeks*2
+	wdays = cdays - non_workdays_count[d1.weekday()](rdays) - weeks*2
 	return max(0, wdays)
 
 weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday',

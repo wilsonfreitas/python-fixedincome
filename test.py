@@ -75,12 +75,16 @@ class TestCalendar(unittest.TestCase):
 		self.assertEqual(date(2001, 1, 1) in cal.holidays, True)
 		self.assertEqual(cal.index[cal.startdate], (1, 1, True))
 		self.assertEqual(cal.index[cal.enddate], (520, 730, False))
-	
-	def test_Calendar_workdays(self):
-		'calendar count of workdays'
-		cal = Calendar('Test')
+		
+	def test_Calendar_big_calendar_load_and_workdays(self):
+		'loading a big calendar and computing workdays between 2 dates'
+		cal = Calendar('ANBIMA')
 		days = cal.workdays(('2002-01-01', '2002-01-02'))
 		self.assertEqual(0, days, 'Wrong business days amount')
+		self.assertEqual(cal.workdays(('2013-01-01', '2013-01-31')), 21)
+		self.assertEqual(cal.workdays(('2013-01-01', '2014-01-01')), 252)
+		self.assertEqual(cal.workdays(('2014-01-01', '2015-01-01')), 252)
+		self.assertEqual(cal.workdays(('2013-08-21', '2013-08-24')), 2)
 		self.assertEqual(cal.workdays(('2002-07-12', '2002-07-22')), 6)
 	
 	def test_Calendar_currentdays(self):
@@ -95,6 +99,17 @@ class TestCalendar(unittest.TestCase):
 		self.assertEqual(cal.isworkday('2002-01-01'), False) # New year
 		self.assertEqual(cal.isworkday('2002-01-02'), True)  # First workday
 		self.assertEqual(cal.isworkday('2002-01-05'), False) # Saturday
+	
+	def test_Calendar_next_workday(self):
+		"""next_workday calculations"""
+		cal = Calendar('Test')
+		self.assertEqual(cal.next_workday('2001-01-01'), '2001-01-02')
+		
+	def test_Calendar_previous_workday(self):
+		"""previous_workday calculations"""
+		cal = Calendar('Test')
+		self.assertEqual(cal.previous_workday('2001-08-12'), '2001-08-10')
+		
 
 
 class TestCompounding(unittest.TestCase):

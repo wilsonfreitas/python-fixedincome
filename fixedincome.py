@@ -421,7 +421,8 @@ class Calendar(object):
 	def _read_cal(self, cal):
 		fname = cal + '.cal'
 		if not os.path.exists(fname):
-			raise Exception('Invalid calendar specification: file not found (%s)' % fname)
+			raise Exception('Invalid calendar specification: \
+			file not found (%s)' % fname)
 		self._cal_spec = cal
 		fcal = open(fname)
 		w = '|'.join(self._weekdays)
@@ -441,7 +442,9 @@ class Calendar(object):
 	def workdays(self, dates):
 		d1, d2 = dates
 		d1 = datetime.strptime(d1, '%Y-%m-%d').date()
+		d1 = self.__next_workday(d1)
 		d2 = datetime.strptime(d2, '%Y-%m-%d').date()
+		d2 = self.__previous_workday(d2)
 		return self._index[d2][0] - self._index[d1][0]
 	
 	def currentdays(self, dates):
@@ -453,6 +456,32 @@ class Calendar(object):
 	def isworkday(self, dt):
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return not self._index[dt][2]
+	
+	def __next_workday(self, dt):
+		d1 = timedelta(1)
+		while self._index[dt][2]:
+			dt += d1
+		return dt
+		
+	def next_workday(self, dt):
+		"""Returns the next business day whether the passed date isn't a
+		business day or returns the given date"""
+		d1 = timedelta(1)
+		dt = datetime.strptime(dt, '%Y-%m-%d').date()
+		return self.__next_workday(dt).isoformat()
+	
+	def __previous_workday(self, dt):
+		d1 = timedelta(1)
+		while self._index[dt][2]:
+			dt -= d1
+		return dt
+	
+	def previous_workday(self, dt):
+		"""Returns the first business day before the passed date whether
+		the given date isn't a business day or returns the given date"""
+		d1 = timedelta(1)
+		dt = datetime.strptime(dt, '%Y-%m-%d').date()
+		return self.__previous_workday(dt).isoformat()
 
 
 class InterestRate(object):
@@ -461,9 +490,10 @@ class InterestRate(object):
 	
 	This class receives a calendar instance in its constructor's parameter list
 	because in some cases it's fairly common to user provide that information.
-	Despite of having a default calendar set either into the system or for a given
-	market, we are likely to handle the situation where interest rate has its own
-	calendar and that calendar must be used to discount the cashflows.
+	Despite of having a default calendar set either into the system or for a 
+	given market, we are likely to handle the situation where interest rate 
+	has its own calendar and that calendar must be used to discount the
+	cashflows.
 	"""
 	# TODO write conversion functions: given other settings generate a different rate
 	def __init__(self, rate, frequency, compounding, daycount, calendar=None):

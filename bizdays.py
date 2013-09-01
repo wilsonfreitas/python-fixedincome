@@ -1,4 +1,16 @@
-'''
+'''Business days calculations and utilities for a given calendar specification.
+The calendar specification is a .cal file containing the weekdays to be 
+considered as non-business days and a iso-formated list of dates representing
+holidays. It follows an example::
+
+	Saturday
+	Sunday
+	2001-01-01
+	2002-01-01
+	2013-01-01
+
+Classes:
+	Calendar
 '''
 
 import os
@@ -6,6 +18,10 @@ from datetime import datetime, date, timedelta
 import re
 
 class Calendar(object):
+	''' Calendar class to compute business days accordingly a given
+	calendar specification. The specification has the weekdays which aren't
+	business days and a list of holidays (or non-business days).
+	'''
 	_weekdays = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 		 'Saturday', 'Sunday')
 	def __init__(self, cal):

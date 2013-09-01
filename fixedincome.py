@@ -463,10 +463,9 @@ class Calendar(object):
 			dt += d1
 		return dt
 		
-	def next_workday(self, dt):
+	def adjust_next(self, dt):
 		"""Returns the next business day whether the passed date isn't a
 		business day or returns the given date"""
-		d1 = timedelta(1)
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return self.__next_workday(dt).isoformat()
 	
@@ -476,10 +475,9 @@ class Calendar(object):
 			dt -= d1
 		return dt
 	
-	def previous_workday(self, dt):
+	def adjust_previous(self, dt):
 		"""Returns the first business day before the passed date whether
 		the given date isn't a business day or returns the given date"""
-		d1 = timedelta(1)
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return self.__previous_workday(dt).isoformat()
 

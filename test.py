@@ -103,12 +103,12 @@ class TestCalendar(unittest.TestCase):
 	def test_Calendar_next_workday(self):
 		"""next_workday calculations"""
 		cal = Calendar('Test')
-		self.assertEqual(cal.next_workday('2001-01-01'), '2001-01-02')
+		self.assertEqual(cal.adjust_next('2001-01-01'), '2001-01-02')
 		
 	def test_Calendar_previous_workday(self):
 		"""previous_workday calculations"""
 		cal = Calendar('Test')
-		self.assertEqual(cal.previous_workday('2001-08-12'), '2001-08-10')
+		self.assertEqual(cal.adjust_previous('2001-08-12'), '2001-08-10')
 		
 
 

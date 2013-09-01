@@ -480,6 +480,14 @@ class Calendar(object):
 		the given date isn't a business day or returns the given date"""
 		dt = datetime.strptime(dt, '%Y-%m-%d').date()
 		return self.__previous_workday(dt).isoformat()
+	
+	def seq(self, _from, _to):
+		d1 = timedelta(1)
+		_from = self.__next_workday(datetime.strptime(_from, '%Y-%m-%d').date())
+		_to = datetime.strptime(_to, '%Y-%m-%d').date()
+		while _from <= _to:
+			yield _from.isoformat()
+			_from = self.__next_workday(_from + d1)
 
 
 class InterestRate(object):

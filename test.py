@@ -70,11 +70,11 @@ class TestCalendar(unittest.TestCase):
 		cal = Calendar('Test')
 		self.assertEqual(cal, Calendar('Test'))
 		self.assertEqual(cal.startdate.isoformat(), '2001-01-01')
-		self.assertEqual(cal.enddate.isoformat(), '2002-12-31')
-		self.assertEqual(len(cal.holidays), 2)
+		self.assertEqual(cal.enddate.isoformat(), '2013-12-31')
+		self.assertEqual(len(cal.holidays), 3)
 		self.assertEqual(date(2001, 1, 1) in cal.holidays, True)
 		self.assertEqual(cal.index[cal.startdate], (1, 1, True))
-		self.assertEqual(cal.index[cal.enddate], (520, 730, False))
+		self.assertEqual(cal.index[cal.enddate], (3389, 4748, False))
 		
 	def test_Calendar_big_calendar_load_and_workdays(self):
 		'loading a big calendar and computing workdays between 2 dates'
@@ -109,7 +109,20 @@ class TestCalendar(unittest.TestCase):
 		"""previous_workday calculations"""
 		cal = Calendar('Test')
 		self.assertEqual(cal.adjust_previous('2001-08-12'), '2001-08-10')
-		
+	
+	def test_Calendar_seq(self):
+		'''sequence generator of workdays'''
+		cal = Calendar('Test')
+		seq = cal.seq('2013-01-01', '2013-01-05')
+		dts = ('2013-01-02', '2013-01-03', '2013-01-04')
+		for i, dt in enumerate(seq):
+			self.assertEqual(dt, dts[i])
+		seq = cal.seq('2013-01-02', '2013-01-02')
+		for i, dt in enumerate(seq):
+			self.assertEqual(dt, '2013-01-02')
+		seq = cal.seq('2013-01-01', '2013-01-01')
+		with self.assertRaises(StopIteration):
+			seq.next()
 
 
 class TestCompounding(unittest.TestCase):

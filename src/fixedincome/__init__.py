@@ -9,6 +9,10 @@ It promotes an easy to use approach to set and handle the interest rate and its 
 
 This module also helps with interest rate conversions and computations of compounding
 factors over time periods, using either business days and actual days.
+
+The module is fully vectorized using NumPy and provides seamless integration with
+Pandas and Polars DataFrames. Results from calculations can be directly assigned to
+DataFrame columns.
 """
 
 from .core import (
@@ -22,7 +26,7 @@ from .core import (
     InterestRate,
     TimeUnit,
 )
-from .utils import compound, discount, ir, period
+from .utils import compound, discount, ir, period, periods, rates
 
 __version__ = "0.1.0"
 __all__ = [
@@ -39,4 +43,6 @@ __all__ = [
     "compound",
     "discount",
     "period",
+    "periods",  # Vectorized period creation
+    "rates",    # Vectorized rate creation
 ]

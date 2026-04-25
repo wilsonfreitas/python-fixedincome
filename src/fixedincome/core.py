@@ -1,6 +1,6 @@
 """Core classes for fixed income calculations."""
 
-from math import exp
+import numpy as np
 
 
 class GenericPeriod:
@@ -34,11 +34,31 @@ class FixedTimePeriod(GenericPeriod):
 
     def __init__(self, size, unit):
         super().__init__(unit)
-        self._size = size
+        # Convert to numpy array for vectorization support
+        self._size = np.asarray(size, dtype=np.float64)
+        self._scalar_size = np.ndim(self._size) == 0
 
     def size(self):
         """Return the quantity related to the fixed period."""
+        if self._scalar_size:
+            return float(self._size)
         return self._size
+
+    def __len__(self):
+        return len(self._size) if not self._scalar_size else 1
+
+    def __getitem__(self, idx):
+        if self._scalar_size:
+            if idx == 0 or idx == Ellipsis:
+                return self._size.item()
+            raise IndexError("index out of range")
+        return self._size[idx]
+
+    def __iter__(self):
+        if self._scalar_size:
+            yield self._size.item()
+        else:
+            yield from self._size.flat
 
 
 class DateRangePeriod(GenericPeriod):
@@ -177,37 +197,37 @@ class DayCount:
         """
         Returns the size of the period converted to the given unit.
         """
-        return period.size() * self._unit_convert[period.unit][unit]
+        return np.asarray(period.size()) * self._unit_convert[period.unit][unit]
 
     def day(self, period):
         """
         Returns the size of the period converted to the given unit.
         """
-        return period.size() * self._unit_convert[period.unit]["day"]
+        return np.asarray(period.size()) * self._unit_convert[period.unit]["day"]
 
     def month(self, period):
         """
         Returns the size of the period converted to the given unit.
         """
-        return period.size() * self._unit_convert[period.unit]["month"]
+        return np.asarray(period.size()) * self._unit_convert[period.unit]["month"]
 
     def quarter(self, period):
         """
         Returns the size of the period converted to the given unit.
         """
-        return period.size() * self._unit_convert[period.unit]["quarter"]
+        return np.asarray(period.size()) * self._unit_convert[period.unit]["quarter"]
 
     def half_year(self, period):
         """
         Returns the size of the period converted to the given unit.
         """
-        return period.size() * self._unit_convert[period.unit]["half-year"]
+        return np.asarray(period.size()) * self._unit_convert[period.unit]["half-year"]
 
     def year(self, period):
         """
         Returns the size of the period converted to the given unit.
         """
-        return period.size() * self._unit_convert[period.unit]["year"]
+        return np.asarray(period.size()) * self._unit_convert[period.unit]["year"]
 
     def daysinunit(self, unit):
         """
@@ -230,8 +250,8 @@ class DayCount:
         Returns an year fraction regarding period definition.
         This function always returns year's fraction.
         """
-        days = period.size() * self.daysinunit(period.unit)
-        return float(days) / self.daysinbase
+        days = np.asarray(period.size()) * self.daysinunit(period.unit)
+        return np.asarray(days, dtype=np.float64) / self.daysinbase
 
     def timefreq(self, period, frequency):
         """
@@ -239,7 +259,7 @@ class DayCount:
         to the given frequency.
         """
         tf = self.timefactor(period)
-        return tf * self.unitsize(frequency.unit())
+        return np.asarray(tf, dtype=np.float64) * self.unitsize(frequency.unit())
 
 
 DayCount.names = tuple(DayCount._daycounts.keys())
@@ -281,9 +301,9 @@ class TimeUnit:
 
 class Compounding:
     _funcs = {
-        "simple": lambda r, t: 1 + r * t,
-        "compounded": lambda r, t: (1 + r) ** t,
-        "continuous": lambda r, t: exp(r * t),
+        "simple": lambda r, t: 1 + np.asarray(r) * np.asarray(t),
+        "compounded": lambda r, t: (1 + np.asarray(r)) ** np.asarray(t),
+        "continuous": lambda r, t: np.exp(np.asarray(r) * np.asarray(t)),
     }
 
     def __init__(self, name):
@@ -319,6 +339,9 @@ class InterestRate:
     given market, we are likely to handle the situation where interest rate
     has its own calendar and that calendar must be used to discount the
     cashflows.
+    
+    The rate parameter can be a scalar or an array-like object (numpy array, 
+    pandas Series, or Polars Series) for vectorized calculations.
     """
 
     # TODO write conversion functions: given other settings generate a different rate
@@ -342,4 +365,35 @@ class InterestRate:
             period = CalendarRangePeriod(period, self.calendar)
 
         t = self.daycount.timefreq(period, self.frequency)
-        return self.compounding(self.rate, t)
+        result = self.compounding(self.rate, t)
+        # Return as numpy array for consistent handling
+        return np.asarray(result)
+
+
+# Add vectorized module-level functions for Pandas/Polars compatibility
+def _to_numpy_array(arr):
+    """Convert array-like objects (pandas Series, Polars Series) to numpy array."""
+    if hasattr(arr, 'to_numpy'):
+        # Works for both pandas and Polars
+        return arr.to_numpy()
+    elif hasattr(arr, '__array__'):
+        return np.asarray(arr)
+    return arr
+
+
+def compound(ir, period):
+    """
+    Return the compounding factor regarding an interest rate and a period.
+    
+    Supports vectorized operations with numpy arrays, pandas Series, and Polars Series.
+    """
+    return ir.compound(period)
+
+
+def discount(ir, period):
+    """
+    Return the discount factor regarding an interest rate and a period.
+    
+    Supports vectorized operations with numpy arrays, pandas Series, and Polars Series.
+    """
+    return ir.discount(period)

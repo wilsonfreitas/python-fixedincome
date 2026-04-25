@@ -16,6 +16,10 @@ It is as simple as declare such a statement like `'0.06 annual simple actual/365
 Here we have an interest rate which yields 6% annually, uses a simple compounding (linear),
 counts all days between 2 dates and considers 365 per year.
 
+The module is **fully vectorized using NumPy** and provides seamless integration with
+**Pandas and Polars DataFrames**. Results from calculations can be directly assigned to
+DataFrame columns, enabling efficient batch processing of multiple rates and periods.
+
 ## Installation
 
 Using uv (recommended):
@@ -46,6 +50,36 @@ factor = compound(rate, p)
 
 # Calculate discount factor
 disc = discount(rate, p)
+```
+
+### Vectorized Operations with NumPy, Pandas, and Polars
+
+The module supports vectorized operations for efficient batch calculations:
+
+```python
+import numpy as np
+import pandas as pd
+from fixedincome import rates, periods, compound, discount
+
+# Create multiple interest rates at once
+rates_array = np.array([0.05, 0.06, 0.07])
+ir_vector = rates(rates_array, 'annual', 'simple', 'actual/365')
+
+# Create multiple periods at once
+periods_array = np.array([1, 2, 3])
+p_vector = periods(periods_array, 'month')
+
+# Calculate compounding factors for all combinations
+factors = compound(ir_vector, p_vector)
+
+# Works seamlessly with Pandas DataFrames
+df = pd.DataFrame({
+    'rate': [0.05, 0.06, 0.07],
+    'months': [1, 2, 3]
+})
+ir_df = rates(df['rate'], 'annual', 'simple', 'actual/365')
+p_df = periods(df['months'], 'month')
+df['compounding_factor'] = compound(ir_df, p_df)
 ```
 
 ### Interest Rate Specification
@@ -133,9 +167,9 @@ pre-commit run --all-files
 python-fixedincome/
 ├── src/
 │   └── fixedincome/
-│       ├── __init__.py
-│       ├── core.py      # Core classes (InterestRate, DayCount, etc.)
-│       └── utils.py     # Utility functions (ir, period, compound, discount)
+│       ├── __init__.py      # Module exports and version info
+│       ├── core.py          # Core classes (InterestRate, DayCount, etc.) with NumPy vectorization
+│       └── utils.py         # Utility functions (ir, period, compound, discount, rates, periods)
 ├── tests/
 │   └── test_fixedincome.py
 ├── pyproject.toml
@@ -143,6 +177,11 @@ python-fixedincome/
 ├── .pre-commit-config.yaml
 └── ...
 ```
+
+## Dependencies
+
+- **numpy**: For vectorized numerical operations
+- **bizdays**: For business day calendar calculations
 
 ## License
 

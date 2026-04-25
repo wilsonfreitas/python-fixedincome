@@ -1,39 +1,43 @@
+```
+# Dependencies
+uv.lock
+*.lock
+
+# Python
+__pycache__/
 *.pyc
-.DS_Store
-
-*.py[cod]
-
-# C extensions
-*.so
-
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
-htmlcov/*
-
-# Installer logs
-pip-log.txt
-
-# Unit test / coverage reports
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
+.env.local
+.env.*
+.pytest_cache/
+.mypy_cache/
 .coverage
-.tox
-nosetests.xml
+coverage/
 
-# Translations
-*.mo
+# Build artifacts
+build/
+dist/
+*.egg-info/
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pre-commit
+.pre-commit-config.yaml
+```

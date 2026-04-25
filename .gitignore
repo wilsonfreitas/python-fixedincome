@@ -1,4 +1,3 @@
-```
 # Compiled Python files
 *.pyc
 __pycache__/
@@ -27,4 +26,3 @@ htmlcov/
 dist/
 build/
 *.egg-info/
-```

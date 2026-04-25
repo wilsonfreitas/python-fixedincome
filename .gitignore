@@ -1,43 +1,64 @@
-```
-# Dependencies
-uv.lock
-*.lock
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
+# Environment and temporary files
 .env
 .env.local
-.env.*
-.pytest_cache/
-.mypy_cache/
-.coverage
-coverage/
+*.env.*
 
-# Build artifacts
-build/
-dist/
-*.egg-info/
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# Logs
-*.log
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# OS
+# Dependencies
+.venv/
+venv/
+node_modules/
+
+# Build artifacts
+dist/
+build/
+target/
+
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# Pre-commit
-.pre-commit-config.yaml
-```
+# Testing
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Compression and archives
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
